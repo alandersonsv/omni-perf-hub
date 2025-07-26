@@ -9,44 +9,44 @@ All colors MUST be HSL.
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 0 0% 0%;
 
-    --card: 255 255 255;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
 
-    --popover: 255 255 255;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
 
-    --primary: 224 71% 49%;
-    --primary-foreground: 255 255 255;
+    --primary: 25 95% 53%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 20%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 220 14% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 20%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 255 255 255;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 224 71% 49%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 25 95% 53%;
 
-    /* Dashboard specific colors */
-    --analytics: 217 71% 53%;
-    --meta: 221 83% 53%;
+    /* Dashboard specific colors - laranja theme */
+    --analytics: 25 95% 53%;
+    --meta: 25 85% 55%;
     --google: 25 95% 53%;
-    --ecommerce: 142 76% 36%;
-    --seo: 262 83% 58%;
+    --ecommerce: 25 80% 50%;
+    --seo: 25 90% 48%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(224 71% 49%), hsl(262 83% 58%));
-    --gradient-analytics: linear-gradient(135deg, hsl(217 71% 53%), hsl(199 89% 48%));
-    --gradient-meta: linear-gradient(135deg, hsl(221 83% 53%), hsl(262 83% 58%));
+    /* Gradients - laranja theme */
+    --gradient-primary: linear-gradient(135deg, hsl(25 95% 53%), hsl(25 85% 45%));
+    --gradient-analytics: linear-gradient(135deg, hsl(25 95% 53%), hsl(25 85% 45%));
+    --gradient-meta: linear-gradient(135deg, hsl(25 85% 55%), hsl(25 75% 47%));
     --gradient-card: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
 
     /* Shadows */
@@ -73,39 +73,39 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 5%;
+    --foreground: 0 0% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 224 71% 49%;
-    --primary-foreground: 255 255 255;
+    --primary: 25 95% 53%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 90%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 90%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 95%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224 71% 49%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 25 95% 53%;
 
-    --analytics: 217 71% 53%;
-    --meta: 221 83% 53%;
+    --analytics: 25 95% 53%;
+    --meta: 25 85% 55%;
     --google: 25 95% 53%;
-    --ecommerce: 142 76% 36%;
-    --seo: 262 83% 58%;
+    --ecommerce: 25 80% 50%;
+    --seo: 25 90% 48%;
 
     --gradient-card: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
     --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
