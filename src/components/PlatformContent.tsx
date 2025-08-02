@@ -12,12 +12,20 @@ import {
   FileText
 } from "lucide-react";
 
+import { MetaAdsContent } from "@/components/platforms/MetaAdsContent";
+import { GoogleAdsContent } from "@/components/platforms/GoogleAdsContent";
+import { GA4Content } from "@/components/platforms/GA4Content";
+import { SEOContent } from "@/components/platforms/SEOContent";
+import { EcommerceContent } from "@/components/platforms/EcommerceContent";
+import { FilterState } from "@/types/dashboardTypes";
+
 interface PlatformContentProps {
   platform: string;
   page: string;
+  filters: FilterState;
 }
 
-export function PlatformContent({ platform, page }: PlatformContentProps) {
+export function PlatformContent({ platform, page, filters }: PlatformContentProps) {
   const renderAnalyticsContent = () => {
     switch (page) {
       case 'Visão Geral':
@@ -295,32 +303,24 @@ export function PlatformContent({ platform, page }: PlatformContentProps) {
 
   const renderContent = () => {
     switch (platform) {
-      case 'analytics':
-        return renderAnalyticsContent();
       case 'meta':
-        return renderMetaContent();
+        return <MetaAdsContent page={page} filters={filters} />;
       case 'google-ads':
-        return renderGoogleAdsContent();
-      case 'ecommerce':
-        return renderEcommerceContent();
+        return <GoogleAdsContent page={page} filters={filters} />;
+      case 'analytics':
+        return <GA4Content page={page} filters={filters} />;
       case 'seo':
-        return renderSeoContent();
+        return <SEOContent page={page} filters={filters} />;
+      case 'ecommerce':
+        return <EcommerceContent page={page} filters={filters} />;
       default:
         return (
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-muted-foreground">
-                Selecione uma plataforma para visualizar os dados.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="p-6 text-center">
+            <p className="text-muted-foreground">Selecione uma plataforma para visualizar os dados</p>
+          </div>
         );
     }
   };
 
-  return (
-    <div className="p-6">
-      {renderContent()}
-    </div>
-  );
+  return renderContent();
 }

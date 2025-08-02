@@ -9,39 +9,39 @@ import {
 
 const platforms = [
   {
-    id: 'analytics',
-    name: 'Google Analytics 4',
-    icon: BarChart3,
-    color: 'analytics',
-    pages: ['Visão Geral', 'Aquisição de Usuários', 'Conteúdo Acessado', 'Dispositivos e Localização', 'Engajamento']
-  },
-  {
     id: 'meta',
     name: 'Meta Ads',
     icon: Facebook,
     color: 'meta',
-    pages: ['Visão Geral', 'Campanhas', 'Públicos', 'Anúncios']
+    pages: ['KPIs Principais & Funil', 'Dados Demográficos', 'Nível de Anúncio']
   },
   {
     id: 'google-ads',
     name: 'Google Ads',
     icon: Chrome,
     color: 'google',
-    pages: ['Visão Geral', 'Campanhas', 'Palavras-chave', 'Públicos', 'Dispositivos']
+    pages: ['KPIs e Funil', 'Demografia', 'Palavras-chave']
   },
   {
-    id: 'ecommerce',
-    name: 'E-commerce',
-    icon: ShoppingCart,
-    color: 'ecommerce',
-    pages: ['Visão Geral', 'Funil de Venda', 'Produto / Categoria']
+    id: 'analytics',
+    name: 'GA4',
+    icon: BarChart3,
+    color: 'analytics',
+    pages: ['KPIs de Engajamento', 'Público', 'Landing Pages']
   },
   {
     id: 'seo',
     name: 'SEO / Blog',
     icon: Search,
     color: 'seo',
-    pages: ['Visão Geral', 'Conteúdo / Blog']
+    pages: ['KPIs', 'Conteúdo/Blog']
+  },
+  {
+    id: 'ecommerce',
+    name: 'E-commerce',
+    icon: ShoppingCart,
+    color: 'ecommerce',
+    pages: ['KPIs de Ecommerce', 'Funil de Ecommerce', 'Produto/Categoria']
   }
 ];
 
