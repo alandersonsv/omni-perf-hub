@@ -14,6 +14,142 @@ export type Database = {
   }
   public: {
     Tables: {
+      agencies: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          n8n_instance_id: string | null
+          name: string
+          phone: string | null
+          subscription_plan:
+            | Database["public"]["Enums"]["subscription_plan"]
+            | null
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          n8n_instance_id?: string | null
+          name: string
+          phone?: string | null
+          subscription_plan?:
+            | Database["public"]["Enums"]["subscription_plan"]
+            | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          n8n_instance_id?: string | null
+          name?: string
+          phone?: string | null
+          subscription_plan?:
+            | Database["public"]["Enums"]["subscription_plan"]
+            | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agency_clients: {
+        Row: {
+          agency_id: string
+          cnpj: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string | null
+          updated_at: string
+          whatsapp_number: string | null
+        }
+        Insert: {
+          agency_id: string
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone?: string | null
+          updated_at?: string
+          whatsapp_number?: string | null
+        }
+        Update: {
+          agency_id?: string
+          cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          whatsapp_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_clients_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alerts_config: {
+        Row: {
+          agency_id: string
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          created_at: string
+          id: string
+          is_active: boolean | null
+          notify_time: string | null
+          platforms: Json | null
+          threshold_value: number | null
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          agency_id: string
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          notify_time?: string | null
+          platforms?: Json | null
+          threshold_value?: number | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          agency_id?: string
+          alert_type?: Database["public"]["Enums"]["alert_type"]
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          notify_time?: string | null
+          platforms?: Json | null
+          threshold_value?: number | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_config_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_ads_campaigns: {
         Row: {
           average_ticket: number | null
@@ -197,6 +333,50 @@ export type Database = {
         }
         Relationships: []
       }
+      integrations: {
+        Row: {
+          account_id: string
+          agency_id: string
+          created_at: string
+          credentials: Json | null
+          id: string
+          is_active: boolean | null
+          last_sync: string | null
+          platform: Database["public"]["Enums"]["platform_type"]
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          agency_id: string
+          created_at?: string
+          credentials?: Json | null
+          id?: string
+          is_active?: boolean | null
+          last_sync?: string | null
+          platform: Database["public"]["Enums"]["platform_type"]
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          agency_id?: string
+          created_at?: string
+          credentials?: Json | null
+          id?: string
+          is_active?: boolean | null
+          last_sync?: string | null
+          platform?: Database["public"]["Enums"]["platform_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integrations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -215,6 +395,148 @@ export type Database = {
         }
         Relationships: []
       }
+      reports_config: {
+        Row: {
+          agency_id: string
+          client_id: string
+          created_at: string
+          frequency: Database["public"]["Enums"]["report_frequency"] | null
+          id: string
+          is_active: boolean | null
+          message_template: string | null
+          metrics: Json
+          name: string
+          send_days: Json | null
+          send_time: string | null
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          client_id: string
+          created_at?: string
+          frequency?: Database["public"]["Enums"]["report_frequency"] | null
+          id?: string
+          is_active?: boolean | null
+          message_template?: string | null
+          metrics?: Json
+          name: string
+          send_days?: Json | null
+          send_time?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          client_id?: string
+          created_at?: string
+          frequency?: Database["public"]["Enums"]["report_frequency"] | null
+          id?: string
+          is_active?: boolean | null
+          message_template?: string | null
+          metrics?: Json
+          name?: string
+          send_days?: Json | null
+          send_time?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_config_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_config_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "agency_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          accepted_at: string | null
+          agency_id: string
+          email: string
+          id: string
+          invited_at: string
+          permissions: Json | null
+          role: Database["public"]["Enums"]["user_role"] | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          agency_id: string
+          email: string
+          id?: string
+          invited_at?: string
+          permissions?: Json | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+        }
+        Update: {
+          accepted_at?: string | null
+          agency_id?: string
+          email?: string
+          id?: string
+          invited_at?: string
+          permissions?: Json | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_connections: {
+        Row: {
+          agency_id: string
+          connected_at: string | null
+          created_at: string
+          evolution_session_id: string | null
+          id: string
+          phone_number: string
+          qr_code: string | null
+          status: Database["public"]["Enums"]["connection_status"] | null
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          connected_at?: string | null
+          created_at?: string
+          evolution_session_id?: string | null
+          id?: string
+          phone_number: string
+          qr_code?: string | null
+          status?: Database["public"]["Enums"]["connection_status"] | null
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          connected_at?: string | null
+          created_at?: string
+          evolution_session_id?: string | null
+          id?: string
+          phone_number?: string
+          qr_code?: string | null
+          status?: Database["public"]["Enums"]["connection_status"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_connections_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -232,7 +554,16 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      alert_type:
+        | "low_budget"
+        | "account_blocked"
+        | "api_error"
+        | "performance_drop"
+      connection_status: "disconnected" | "pending" | "connected"
+      platform_type: "meta_ads" | "google_ads" | "ga4" | "search_console"
+      report_frequency: "daily" | "weekly" | "monthly"
+      subscription_plan: "trial" | "basic" | "premium"
+      user_role: "owner" | "admin" | "analyst" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -359,6 +690,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      alert_type: [
+        "low_budget",
+        "account_blocked",
+        "api_error",
+        "performance_drop",
+      ],
+      connection_status: ["disconnected", "pending", "connected"],
+      platform_type: ["meta_ads", "google_ads", "ga4", "search_console"],
+      report_frequency: ["daily", "weekly", "monthly"],
+      subscription_plan: ["trial", "basic", "premium"],
+      user_role: ["owner", "admin", "analyst", "viewer"],
+    },
   },
 } as const

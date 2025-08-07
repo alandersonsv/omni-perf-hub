@@ -4,10 +4,14 @@ import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Users, Building2, BarChart3 } from 'lucide-react';
+import { LogOut, Users, Building2, BarChart3, Bell, Zap, MessageSquare } from 'lucide-react';
 import { UserManagement } from '@/components/dashboard/UserManagement';
 import { ClientManagement } from '@/components/dashboard/ClientManagement';
 import { AnalyticsDashboard } from '@/components/dashboard/AnalyticsDashboard';
+import { AlertsManagement } from '@/components/dashboard/AlertsManagement';
+import { IntegrationsManagement } from '@/components/dashboard/IntegrationsManagement';
+import { TeamManagement } from '@/components/dashboard/TeamManagement';
+import { ReportsBuilder } from '@/components/dashboard/ReportsBuilder';
 
 export function Dashboard() {
   const { user, logout } = useAuth();
@@ -38,19 +42,31 @@ export function Dashboard() {
       {/* Content */}
       <div className="p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Analytics
             </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              Relatórios
+            </TabsTrigger>
             <TabsTrigger value="clients" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
-              Meus Clientes
+              Clientes
+            </TabsTrigger>
+            <TabsTrigger value="alerts" className="flex items-center gap-2">
+              <Bell className="w-4 h-4" />
+              Alertas
+            </TabsTrigger>
+            <TabsTrigger value="integrations" className="flex items-center gap-2">
+              <Zap className="w-4 h-4" />
+              Integrações
             </TabsTrigger>
             {user.role === 'admin' && (
-              <TabsTrigger value="users" className="flex items-center gap-2">
+              <TabsTrigger value="team" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
-                Usuários
+                Equipe
               </TabsTrigger>
             )}
           </TabsList>
@@ -59,13 +75,25 @@ export function Dashboard() {
             <AnalyticsDashboard />
           </TabsContent>
 
+          <TabsContent value="reports">
+            <ReportsBuilder />
+          </TabsContent>
+
           <TabsContent value="clients">
             <ClientManagement />
           </TabsContent>
 
+          <TabsContent value="alerts">
+            <AlertsManagement />
+          </TabsContent>
+
+          <TabsContent value="integrations">
+            <IntegrationsManagement />
+          </TabsContent>
+
           {user.role === 'admin' && (
-            <TabsContent value="users">
-              <UserManagement />
+            <TabsContent value="team">
+              <TeamManagement />
             </TabsContent>
           )}
         </Tabs>

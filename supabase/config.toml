@@ -1,1 +1,36 @@
 project_id = "wmrygkfxnzuxkgnybkec"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+port = 9999
+external_url = "http://localhost:3000"
+email_template_dir = "./templates"
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[db]
+port = 54322
+
+[functions.alert-webhook]
+verify_jwt = false
+
+[functions.whatsapp-sender]
+verify_jwt = true
+
+[functions.integration-oauth]
+verify_jwt = false
+
+[storage]
+enabled = true
+port = 54323
+file_size_limit = "50MiB"
