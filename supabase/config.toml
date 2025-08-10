@@ -1,3 +1,4 @@
+
 project_id = "wmrygkfxnzuxkgnybkec"
 
 [api]
@@ -28,6 +29,9 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.integration-oauth]
+verify_jwt = false
+
+[functions.stripe-webhook]
 verify_jwt = false
 
 [storage]
