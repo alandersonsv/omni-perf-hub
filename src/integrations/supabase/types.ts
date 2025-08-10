@@ -150,6 +150,245 @@ export type Database = {
           },
         ]
       }
+      billing_events: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: number
+          payload: Json | null
+          stripe_object_id: string | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: number
+          payload?: Json | null
+          stripe_object_id?: string | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: number
+          payload?: Json | null
+          stripe_object_id?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      categories: {
+        Row: {
+          created_at: string
+          data: Json
+          id: number
+          name: string | null
+          parent_wcid: number | null
+          shop_id: string
+          slug: string | null
+          updated_at: string
+          wc_id: number
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: number
+          name?: string | null
+          parent_wcid?: number | null
+          shop_id: string
+          slug?: string | null
+          updated_at?: string
+          wc_id: number
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: number
+          name?: string | null
+          parent_wcid?: number | null
+          shop_id?: string
+          slug?: string | null
+          updated_at?: string
+          wc_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          created_at: string
+          data: Json
+          email: string | null
+          first_name: string | null
+          id: number
+          last_name: string | null
+          shop_id: string
+          updated_at: string
+          wc_id: number
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          email?: string | null
+          first_name?: string | null
+          id?: number
+          last_name?: string | null
+          shop_id: string
+          updated_at?: string
+          wc_id: number
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          email?: string | null
+          first_name?: string | null
+          id?: number
+          last_name?: string | null
+          shop_id?: string
+          updated_at?: string
+          wc_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_templates: {
+        Row: {
+          config: Json
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          platform: Database["public"]["Enums"]["platform_type"] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          platform?: Database["public"]["Enums"]["platform_type"] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          platform?: Database["public"]["Enums"]["platform_type"] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dashboard_widgets: {
+        Row: {
+          config: Json
+          created_at: string
+          dashboard_id: string
+          id: string
+          position: Json
+          query: Json
+          title: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          dashboard_id: string
+          id?: string
+          position?: Json
+          query?: Json
+          title?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          dashboard_id?: string
+          id?: string
+          position?: Json
+          query?: Json
+          title?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_widgets_dashboard_id_fkey"
+            columns: ["dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "dashboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboards: {
+        Row: {
+          agency_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          layout: Json
+          owner_user_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          layout?: Json
+          owner_user_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          layout?: Json
+          owner_user_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboards_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_ads_campaigns: {
         Row: {
           average_ticket: number | null
@@ -377,6 +616,328 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          amount_cents: number | null
+          created_at: string
+          currency: string | null
+          email: string | null
+          hosted_invoice_url: string | null
+          id: number
+          period_end: string | null
+          period_start: string | null
+          status: string | null
+          stripe_invoice_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          created_at?: string
+          currency?: string | null
+          email?: string | null
+          hosted_invoice_url?: string | null
+          id?: number
+          period_end?: string | null
+          period_start?: string | null
+          status?: string | null
+          stripe_invoice_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number | null
+          created_at?: string
+          currency?: string | null
+          email?: string | null
+          hosted_invoice_url?: string | null
+          id?: number
+          period_end?: string | null
+          period_start?: string | null
+          status?: string | null
+          stripe_invoice_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          data: Json
+          id: number
+          line_item_id: number
+          order_wcid: number
+          price: number | null
+          product_wcid: number | null
+          quantity: number | null
+          shop_id: string
+          total: number | null
+          variation_wcid: number | null
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: number
+          line_item_id: number
+          order_wcid: number
+          price?: number | null
+          product_wcid?: number | null
+          quantity?: number | null
+          shop_id: string
+          total?: number | null
+          variation_wcid?: number | null
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: number
+          line_item_id?: number
+          order_wcid?: number
+          price?: number | null
+          product_wcid?: number | null
+          quantity?: number | null
+          shop_id?: string
+          total?: number | null
+          variation_wcid?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          currency: string | null
+          customer_wcid: number | null
+          data: Json
+          discount_total: number | null
+          id: number
+          order_created_at: string | null
+          shipping_total: number | null
+          shop_id: string
+          status: string | null
+          subtotal: number | null
+          total: number | null
+          updated_at: string
+          wc_id: number
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          customer_wcid?: number | null
+          data?: Json
+          discount_total?: number | null
+          id?: number
+          order_created_at?: string | null
+          shipping_total?: number | null
+          shop_id: string
+          status?: string | null
+          subtotal?: number | null
+          total?: number | null
+          updated_at?: string
+          wc_id: number
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          customer_wcid?: number | null
+          data?: Json
+          discount_total?: number | null
+          id?: number
+          order_created_at?: string | null
+          shipping_total?: number | null
+          shop_id?: string
+          status?: string | null
+          subtotal?: number | null
+          total?: number | null
+          updated_at?: string
+          wc_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          created_at: string
+          currency: string
+          description: string | null
+          features: Json
+          id: string
+          is_active: boolean
+          name: string
+          price_cents: number
+          stripe_price_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json
+          id: string
+          is_active?: boolean
+          name: string
+          price_cents: number
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_cents?: number
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      product_variations: {
+        Row: {
+          created_at: string
+          data: Json
+          id: number
+          parent_product_wcid: number
+          price: number | null
+          shop_id: string
+          sku: string | null
+          status: string | null
+          stock_quantity: number | null
+          updated_at: string
+          wc_id: number
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: number
+          parent_product_wcid: number
+          price?: number | null
+          shop_id: string
+          sku?: string | null
+          status?: string | null
+          stock_quantity?: number | null
+          updated_at?: string
+          wc_id: number
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: number
+          parent_product_wcid?: number
+          price?: number | null
+          shop_id?: string
+          sku?: string | null
+          status?: string | null
+          stock_quantity?: number | null
+          updated_at?: string
+          wc_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variations_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          categories: Json
+          created_at: string
+          data: Json
+          id: number
+          name: string | null
+          price: number | null
+          shop_id: string
+          sku: string | null
+          status: string | null
+          stock_quantity: number | null
+          updated_at: string
+          wc_id: number
+        }
+        Insert: {
+          categories?: Json
+          created_at?: string
+          data?: Json
+          id?: number
+          name?: string | null
+          price?: number | null
+          shop_id: string
+          sku?: string | null
+          status?: string | null
+          stock_quantity?: number | null
+          updated_at?: string
+          wc_id: number
+        }
+        Update: {
+          categories?: Json
+          created_at?: string
+          data?: Json
+          id?: number
+          name?: string | null
+          price?: number | null
+          shop_id?: string
+          sku?: string | null
+          status?: string | null
+          stock_quantity?: number | null
+          updated_at?: string
+          wc_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products_categories: {
+        Row: {
+          category_wcid: number
+          product_wcid: number
+          shop_id: string
+        }
+        Insert: {
+          category_wcid: number
+          product_wcid: number
+          shop_id: string
+        }
+        Update: {
+          category_wcid?: number
+          product_wcid?: number
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_categories_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -455,6 +1016,185 @@ export type Database = {
           },
         ]
       }
+      shops: {
+        Row: {
+          agency_id: string
+          consumer_key_encrypted: string
+          consumer_secret_encrypted: string
+          created_at: string
+          id: string
+          last_synced_at: string | null
+          name: string | null
+          status: string
+          updated_at: string
+          url: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          agency_id: string
+          consumer_key_encrypted: string
+          consumer_secret_encrypted: string
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          name?: string | null
+          status?: string
+          updated_at?: string
+          url: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          agency_id?: string
+          consumer_key_encrypted?: string
+          consumer_secret_encrypted?: string
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          name?: string | null
+          status?: string
+          updated_at?: string
+          url?: string
+          webhook_secret?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shops_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscribers: {
+        Row: {
+          agency_id: string | null
+          created_at: string
+          email: string
+          id: string
+          stripe_customer_id: string | null
+          subscribed: boolean
+          subscription_end: string | null
+          subscription_tier: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          agency_id?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          agency_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscribers_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sync_jobs: {
+        Row: {
+          created_at: string
+          error: string | null
+          finished_at: string | null
+          id: string
+          shop_id: string
+          started_at: string | null
+          stats: Json
+          status: Database["public"]["Enums"]["sync_status"]
+          type: Database["public"]["Enums"]["sync_job_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          shop_id: string
+          started_at?: string | null
+          stats?: Json
+          status?: Database["public"]["Enums"]["sync_status"]
+          type: Database["public"]["Enums"]["sync_job_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          shop_id?: string
+          started_at?: string | null
+          stats?: Json
+          status?: Database["public"]["Enums"]["sync_status"]
+          type?: Database["public"]["Enums"]["sync_job_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_jobs_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sync_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          id: number
+          job_id: string
+          level: string
+          message: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          id?: number
+          job_id: string
+          level?: string
+          message: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          id?: number
+          job_id?: string
+          level?: string
+          message?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_logs_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "sync_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           accepted_at: string | null
@@ -486,6 +1226,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "team_members_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_metrics: {
+        Row: {
+          agency_id: string
+          created_at: string
+          description: string | null
+          expression: string
+          id: string
+          is_public: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          description?: string | null
+          expression: string
+          id?: string
+          is_public?: boolean
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          description?: string | null
+          expression?: string
+          id?: string
+          is_public?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_metrics_agency_id_fkey"
             columns: ["agency_id"]
             isOneToOne: false
             referencedRelation: "agencies"
@@ -560,9 +1344,24 @@ export type Database = {
         | "api_error"
         | "performance_drop"
       connection_status: "disconnected" | "pending" | "connected"
-      platform_type: "meta_ads" | "google_ads" | "ga4" | "search_console"
+      integration_type:
+        | "meta_ads"
+        | "google_ads"
+        | "ga4"
+        | "search_console"
+        | "tiktok_ads"
+        | "woocommerce"
+      platform_type:
+        | "meta_ads"
+        | "google_ads"
+        | "ga4"
+        | "search_console"
+        | "tiktok_ads"
+        | "woocommerce"
       report_frequency: "daily" | "weekly" | "monthly"
       subscription_plan: "trial" | "basic" | "premium"
+      sync_job_type: "initial" | "incremental" | "webhook" | "reindex"
+      sync_status: "queued" | "running" | "success" | "error"
       user_role: "owner" | "admin" | "analyst" | "viewer"
     }
     CompositeTypes: {
@@ -698,9 +1497,26 @@ export const Constants = {
         "performance_drop",
       ],
       connection_status: ["disconnected", "pending", "connected"],
-      platform_type: ["meta_ads", "google_ads", "ga4", "search_console"],
+      integration_type: [
+        "meta_ads",
+        "google_ads",
+        "ga4",
+        "search_console",
+        "tiktok_ads",
+        "woocommerce",
+      ],
+      platform_type: [
+        "meta_ads",
+        "google_ads",
+        "ga4",
+        "search_console",
+        "tiktok_ads",
+        "woocommerce",
+      ],
       report_frequency: ["daily", "weekly", "monthly"],
       subscription_plan: ["trial", "basic", "premium"],
+      sync_job_type: ["initial", "incremental", "webhook", "reindex"],
+      sync_status: ["queued", "running", "success", "error"],
       user_role: ["owner", "admin", "analyst", "viewer"],
     },
   },
