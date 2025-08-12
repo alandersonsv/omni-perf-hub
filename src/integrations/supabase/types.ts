@@ -103,6 +103,74 @@ export type Database = {
           },
         ]
       }
+      ai_requests: {
+        Row: {
+          agency_id: string
+          context: Json
+          created_at: string
+          id: string
+          prompt: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency_id: string
+          context?: Json
+          created_at?: string
+          id?: string
+          prompt: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency_id?: string
+          context?: Json
+          created_at?: string
+          id?: string
+          prompt?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_results: {
+        Row: {
+          agency_id: string
+          content: Json
+          created_at: string
+          id: string
+          request_id: string
+          score: number | null
+        }
+        Insert: {
+          agency_id: string
+          content: Json
+          created_at?: string
+          id?: string
+          request_id: string
+          score?: number | null
+        }
+        Update: {
+          agency_id?: string
+          content?: Json
+          created_at?: string
+          id?: string
+          request_id?: string
+          score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_results_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "ai_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts_config: {
         Row: {
           agency_id: string
@@ -149,6 +217,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      alerts_log: {
+        Row: {
+          agency_id: string
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          channels: Json
+          created_at: string
+          created_by: string | null
+          error: string | null
+          id: number
+          message: string | null
+          meta: Json
+          sent_to: Json
+          severity: string | null
+          status: string
+        }
+        Insert: {
+          agency_id: string
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          channels?: Json
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: number
+          message?: string | null
+          meta?: Json
+          sent_to?: Json
+          severity?: string | null
+          status?: string
+        }
+        Update: {
+          agency_id?: string
+          alert_type?: Database["public"]["Enums"]["alert_type"]
+          channels?: Json
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: number
+          message?: string | null
+          meta?: Json
+          sent_to?: Json
+          severity?: string | null
+          status?: string
+        }
+        Relationships: []
       }
       billing_events: {
         Row: {
@@ -388,6 +501,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ga4_daily: {
+        Row: {
+          agency_id: string
+          bounce_rate: number | null
+          conversions: number | null
+          created_at: string
+          date: string
+          id: number
+          new_users: number | null
+          pageviews: number | null
+          property_id: string
+          revenue: number | null
+          sessions: number | null
+          updated_at: string
+          users: number | null
+        }
+        Insert: {
+          agency_id: string
+          bounce_rate?: number | null
+          conversions?: number | null
+          created_at?: string
+          date: string
+          id?: number
+          new_users?: number | null
+          pageviews?: number | null
+          property_id: string
+          revenue?: number | null
+          sessions?: number | null
+          updated_at?: string
+          users?: number | null
+        }
+        Update: {
+          agency_id?: string
+          bounce_rate?: number | null
+          conversions?: number | null
+          created_at?: string
+          date?: string
+          id?: number
+          new_users?: number | null
+          pageviews?: number | null
+          property_id?: string
+          revenue?: number | null
+          sessions?: number | null
+          updated_at?: string
+          users?: number | null
+        }
+        Relationships: []
       }
       google_ads_campaigns: {
         Row: {
@@ -658,6 +819,99 @@ export type Database = {
           stripe_invoice_id?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      meta_ads_insights_daily: {
+        Row: {
+          account_id: string
+          ad_id: string | null
+          adset_id: string | null
+          agency_id: string
+          campaign_id: string | null
+          clicks: number | null
+          conversions: number | null
+          cpa: number | null
+          cpc: number | null
+          created_at: string
+          date: string
+          id: number
+          impressions: number | null
+          revenue: number | null
+          roas: number | null
+          spend: number | null
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          ad_id?: string | null
+          adset_id?: string | null
+          agency_id: string
+          campaign_id?: string | null
+          clicks?: number | null
+          conversions?: number | null
+          cpa?: number | null
+          cpc?: number | null
+          created_at?: string
+          date: string
+          id?: number
+          impressions?: number | null
+          revenue?: number | null
+          roas?: number | null
+          spend?: number | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          ad_id?: string | null
+          adset_id?: string | null
+          agency_id?: string
+          campaign_id?: string | null
+          clicks?: number | null
+          conversions?: number | null
+          cpa?: number | null
+          cpc?: number | null
+          created_at?: string
+          date?: string
+          id?: number
+          impressions?: number | null
+          revenue?: number | null
+          roas?: number | null
+          spend?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      n8n_events: {
+        Row: {
+          agency_id: string
+          created_at: string
+          event_type: string
+          id: number
+          payload: Json
+          processed_at: string | null
+          response: Json | null
+          status: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          event_type: string
+          id?: number
+          payload?: Json
+          processed_at?: string | null
+          response?: Json | null
+          status?: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          event_type?: string
+          id?: number
+          payload?: Json
+          processed_at?: string | null
+          response?: Json | null
+          status?: string
         }
         Relationships: []
       }
@@ -1015,6 +1269,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      search_console_pages_daily: {
+        Row: {
+          agency_id: string
+          clicks: number | null
+          created_at: string
+          ctr: number | null
+          date: string
+          id: number
+          impressions: number | null
+          page: string
+          position: number | null
+          site_url: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          clicks?: number | null
+          created_at?: string
+          ctr?: number | null
+          date: string
+          id?: number
+          impressions?: number | null
+          page: string
+          position?: number | null
+          site_url: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          clicks?: number | null
+          created_at?: string
+          ctr?: number | null
+          date?: string
+          id?: number
+          impressions?: number | null
+          page?: string
+          position?: number | null
+          site_url?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       shops: {
         Row: {
