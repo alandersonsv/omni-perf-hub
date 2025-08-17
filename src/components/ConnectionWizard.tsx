@@ -153,7 +153,7 @@ function WooCommerceInstructions() {
         <li>Acesse o painel administrativo da sua loja WooCommerce</li>
         <li>Navegue até <strong>WooCommerce &gt; Configurações &gt; Avançado &gt; REST API</strong></li>
         <li>Clique em <strong>Adicionar chave</strong></li>
-        <li>Preencha uma descrição (ex: "Omni Performance Hub")</li>
+        <li>Preencha uma descrição (ex: "Metrionix")</li>
         <li>Selecione <strong>Permissões: Leitura/Escrita</strong></li>
         <li>Clique em <strong>Gerar chave API</strong></li>
         <li>Copie a <strong>Consumer Key</strong> e <strong>Consumer Secret</strong> geradas</li>

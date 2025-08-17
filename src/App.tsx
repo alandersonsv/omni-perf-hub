@@ -17,6 +17,8 @@ import { SimpleDashboard } from "@/pages/SimpleDashboard";
 import { Dashboard } from "@/pages/Dashboard";
 import { Integrations } from "@/pages/Integrations";
 import { OAuthCallback } from "@/pages/OAuthCallback";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsOfService from "@/pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +58,9 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/oauth/callback" element={<OAuthCallback />} />
+            {/* Documentos Legais - URLs não indexáveis */}
+            <Route path="/legal/privacy-policy-2025-confidential" element={<PrivacyPolicy />} />
+            <Route path="/legal/terms-of-service-2025-confidential" element={<TermsOfService />} />
             <Route path="/" element={<Login />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

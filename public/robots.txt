@@ -11,4 +11,12 @@ User-agent: facebookexternalhit
 Allow: /
 
 User-agent: *
+Disallow: /legal/
+Disallow: /legal/privacy-policy-2025-confidential
+Disallow: /legal/terms-of-service-2025-confidential
+
+# Permitir acesso geral ao site
 Allow: /
+
+# Sitemap (opcional)
+# Sitemap: https://seu-dominio.com/sitemap.xml

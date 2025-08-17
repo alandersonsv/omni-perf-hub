@@ -106,7 +106,7 @@ export function SimpleLogin() {
              <Sparkles className="h-8 w-8 text-white" />
            </div>
            <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
-             OmniPerf Hub
+             Metrionix
            </h1>
           <p className="text-gray-600 mt-2">Sistema de autenticação robusto e seguro</p>
         </div>
