@@ -21,8 +21,15 @@ CREATE TABLE IF NOT EXISTS public.meta_ads_insights_daily (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS ux_meta_ads_insights_daily_key
-ON public.meta_ads_insights_daily (agency_id, account_id, COALESCE(campaign_id, ''), COALESCE(adset_id, ''), COALESCE(ad_id, ''), date);
+-- Create unique index separately to avoid syntax issues
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'ux_meta_ads_insights_daily_key') THEN
+        CREATE UNIQUE INDEX ux_meta_ads_insights_daily_key
+        ON public.meta_ads_insights_daily (agency_id, account_id, COALESCE(campaign_id, ''), COALESCE(adset_id, ''), COALESCE(ad_id, ''), date);
+    END IF;
+END
+$$;
 
 ALTER TABLE public.meta_ads_insights_daily ENABLE ROW LEVEL SECURITY;
 

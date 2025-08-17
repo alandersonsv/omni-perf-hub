@@ -17,6 +17,10 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useOAuthFlow } from '@/hooks/useOAuthFlow';
+import { supabase } from '@/integrations/supabase/client';
+import { useOAuthPopup } from '@/hooks/useOAuthPopup';
+import { OAuthDiagnostic } from '@/components/OAuthDiagnostic';
 
 interface Integration {
   id: string;
@@ -25,6 +29,19 @@ interface Integration {
   is_active: boolean;
   last_sync?: string;
   status: 'connected' | 'error' | 'pending';
+}
+
+// Type for data coming from Supabase
+interface SupabaseIntegration {
+  id: string;
+  platform: 'meta_ads' | 'google_ads' | 'ga4' | 'search_console';
+  account_id: string;
+  is_active: boolean;
+  last_sync?: string;
+  credentials?: any;
+  agency_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface WhatsAppConnection {
@@ -71,64 +88,124 @@ export function IntegrationsManagement() {
   const [isConnecting, setIsConnecting] = useState<string | null>(null);
   const [showQRCode, setShowQRCode] = useState(false);
   const { toast } = useToast();
+  const { initiateConnection, handleCallback, refreshToken, isConnecting: isOAuthConnecting, error: oauthError } = useOAuthFlow();
+  const { openPopup, closePopup, isOpen: isPopupOpen } = useOAuthPopup();
+
+  // Function to map Supabase data to Integration type
+  const mapSupabaseToIntegration = (supabaseData: SupabaseIntegration): Integration => {
+    // Derive status based on available data
+    let status: 'connected' | 'error' | 'pending' = 'pending';
+    
+    if (supabaseData.credentials && supabaseData.is_active) {
+      status = 'connected';
+    } else if (supabaseData.credentials && !supabaseData.is_active) {
+      status = 'error';
+    }
+    
+    return {
+      id: supabaseData.id,
+      platform: supabaseData.platform,
+      account_id: supabaseData.account_id,
+      is_active: supabaseData.is_active,
+      last_sync: supabaseData.last_sync,
+      status
+    };
+  };
 
   useEffect(() => {
-    // Mock data - replace with actual API calls
-    setIntegrations([
-      {
-        id: '1',
-        platform: 'meta_ads',
-        account_id: 'act_123456789',
-        is_active: true,
-        last_sync: '2024-01-20T10:30:00Z',
-        status: 'connected',
-      },
-      {
-        id: '2',
-        platform: 'google_ads',
-        account_id: '987-654-3210',
-        is_active: false,
-        last_sync: '2024-01-19T15:45:00Z',
-        status: 'error',
-      },
-    ]);
+    // Carregar integrações do Supabase
+    const fetchIntegrations = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('integrations')
+          .select('*');
+        
+        if (error) {
+          // Verificar se é erro de RLS (recursão infinita)
+          if (error.code === '42P17' || error.message?.includes('infinite recursion')) {
+            console.warn('Erro de RLS detectado, usando dados mock temporariamente:', error);
+            toast({
+              title: 'Aviso: Usando dados de demonstração',
+              description: 'Há um problema com as políticas de segurança do banco. Contate o administrador.',
+              variant: 'default',
+            });
+            // Usar dados mock como fallback
+            setIntegrations([]);
+            return;
+          }
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          // Map Supabase data to Integration type with proper status derivation
+          const mappedIntegrations = data.map((item: SupabaseIntegration) => 
+            mapSupabaseToIntegration(item)
+          );
+          setIntegrations(mappedIntegrations);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar integrações:', error);
+        
+        // Verificar se é erro de conectividade ou configuração
+        const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+        
+        if (errorMessage.includes('Failed to fetch') || errorMessage.includes('network')) {
+          toast({
+            title: 'Erro de conectividade',
+            description: 'Verifique sua conexão com a internet e as configurações do Supabase.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Erro ao carregar integrações',
+            description: 'Não foi possível carregar suas integrações. Verifique as configurações.',
+            variant: 'destructive',
+          });
+        }
+        
+        // Usar dados vazios como fallback
+        setIntegrations([]);
+      }
+    };
 
+    fetchIntegrations();
+
+    // Carregar conexão do WhatsApp (exemplo)
     setWhatsappConnection({
       id: '1',
       phone_number: '+5511999999999',
       status: 'connected',
     });
-  }, []);
+  }, [toast]);
 
   const handleConnect = async (platformId: string) => {
     setIsConnecting(platformId);
 
     try {
-      // Simulate OAuth flow
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const newIntegration: Integration = {
-        id: Math.random().toString(36).substr(2, 9),
-        platform: platformId as Integration['platform'],
-        account_id: `acc_${Math.random().toString(36).substr(2, 9)}`,
-        is_active: true,
-        last_sync: new Date().toISOString(),
-        status: 'connected',
-      };
-
-      setIntegrations(prev => {
-        const filtered = prev.filter(i => i.platform !== platformId);
-        return [...filtered, newIntegration];
-      });
-
+      // Mapear plataforma para o provedor OAuth correto
+      let provider: 'google' | 'meta' | 'woocommerce';
+      
+      if (platformId === 'google_ads' || platformId === 'ga4' || platformId === 'search_console') {
+        provider = 'google';
+      } else if (platformId === 'meta_ads') {
+        provider = 'meta';
+      } else {
+        provider = 'woocommerce';
+      }
+      
+      // Iniciar o fluxo OAuth
+      await initiateConnection(provider);
+      
+      // O restante do fluxo será tratado pelo callback OAuth
       toast({
-        title: "Integração conectada",
-        description: `${integrationPlatforms.find(p => p.id === platformId)?.name} foi conectado com sucesso.`,
+        title: "Iniciando conexão",
+        description: `Conectando com ${integrationPlatforms.find(p => p.id === platformId)?.name}...`,
       });
     } catch (error) {
+      console.error('Erro ao conectar:', error);
       toast({
         title: "Erro na conexão",
-        description: "Não foi possível conectar a integração.",
+        description: error instanceof Error ? error.message : "Não foi possível conectar a integração.",
         variant: "destructive",
       });
     } finally {
@@ -140,12 +217,30 @@ export function IntegrationsManagement() {
     const integration = integrations.find(i => i.id === integrationId);
     if (!integration) return;
 
-    setIntegrations(prev => prev.filter(i => i.id !== integrationId));
+    try {
+      // Remover a integração do banco de dados
+      const { error } = await supabase
+        .from('integrations')
+        .delete()
+        .eq('id', integrationId);
+      
+      if (error) throw error;
 
-    toast({
-      title: "Integração desconectada",
-      description: `${integrationPlatforms.find(p => p.id === integration.platform)?.name} foi desconectado.`,
-    });
+      // Atualizar o estado local
+      setIntegrations(prev => prev.filter(i => i.id !== integrationId));
+
+      toast({
+        title: "Integração desconectada",
+        description: `${integrationPlatforms.find(p => p.id === integration.platform)?.name} foi desconectado.`,
+      });
+    } catch (error) {
+      console.error('Erro ao desconectar:', error);
+      toast({
+        title: "Erro ao desconectar",
+        description: "Não foi possível desconectar a integração.",
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleIntegration = async (integrationId: string) => {
@@ -222,22 +317,16 @@ export function IntegrationsManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Integrações</h2>
-        <p className="text-muted-foreground">
-          Conecte suas contas para automatizar a coleta de dados
-        </p>
-      </div>
-
-      <Tabs defaultValue="apis" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="apis">APIs de Marketing</TabsTrigger>
-          <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+    <div className="space-y-4 sm:space-y-6">
+      <Tabs defaultValue="apis" className="space-y-4 sm:space-y-6">
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="apis" className="text-xs sm:text-sm flex-1 sm:flex-initial">APIs de Marketing</TabsTrigger>
+          <TabsTrigger value="whatsapp" className="text-xs sm:text-sm flex-1 sm:flex-initial">WhatsApp</TabsTrigger>
+          <TabsTrigger value="diagnostic" className="text-xs sm:text-sm flex-1 sm:flex-initial">Diagnóstico</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="apis" className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+        <TabsContent value="apis" className="space-y-4 sm:space-y-6">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
             {integrationPlatforms.map((platform) => {
               const integration = integrations.find(i => i.platform === platform.id);
               const Icon = platform.icon;
@@ -245,15 +334,15 @@ export function IntegrationsManagement() {
 
               return (
                 <Card key={platform.id}>
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-2 sm:pb-3">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${platform.color}`}>
-                          <Icon className="w-5 h-5 text-white" />
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className={`p-1.5 sm:p-2 rounded-lg ${platform.color}`}>
+                          <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                         </div>
                         <div>
-                          <CardTitle className="text-lg">{platform.name}</CardTitle>
-                          <p className="text-sm text-muted-foreground">
+                          <CardTitle className="text-base sm:text-lg">{platform.name}</CardTitle>
+                          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                             {platform.description}
                           </p>
                         </div>
@@ -261,56 +350,58 @@ export function IntegrationsManagement() {
                       {integration && getStatusIcon(integration.status)}
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-3 sm:space-y-4 px-4 py-3 sm:p-6">
                     {integration ? (
-                      <div className="space-y-3">
+                      <div className="space-y-2 sm:space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Status:</span>
-                          <Badge variant={integration.status === 'connected' ? 'default' : 'destructive'}>
+                          <span className="text-xs sm:text-sm text-muted-foreground">Status:</span>
+                          <Badge variant={integration.status === 'connected' ? 'default' : 'destructive'} className="text-xs">
                             {getStatusText(integration.status)}
                           </Badge>
                         </div>
                         
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Conta:</span>
-                          <span className="text-sm font-mono">{integration.account_id}</span>
+                          <span className="text-xs sm:text-sm text-muted-foreground">Conta:</span>
+                          <span className="text-xs sm:text-sm font-mono truncate max-w-[150px] sm:max-w-none">{integration.account_id}</span>
                         </div>
 
                         {integration.last_sync && (
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Última sincronização:</span>
-                            <span className="text-sm">
+                            <span className="text-xs sm:text-sm text-muted-foreground">Última sincronização:</span>
+                            <span className="text-xs sm:text-sm">
                               {new Date(integration.last_sync).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between pt-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-2 gap-3">
                           <div className="flex items-center space-x-2">
                             <Switch
                               checked={integration.is_active}
                               onCheckedChange={() => toggleIntegration(integration.id)}
                             />
-                            <span className="text-sm">Ativo</span>
+                            <span className="text-xs sm:text-sm">Ativo</span>
                           </div>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleDisconnect(integration.id)}
+                            className="text-xs h-8 w-full sm:w-auto"
                           >
-                            Desconectar
+                            <span className="sm:inline hidden">Desconectar</span>
+                            <span className="sm:hidden inline">Descon</span>
                           </Button>
                         </div>
                       </div>
                     ) : (
                       <Button
-                        className="w-full"
+                        className="w-full text-xs sm:text-sm h-8 sm:h-10"
                         onClick={() => handleConnect(platform.id)}
                         disabled={isConnectingPlatform}
                       >
                         {isConnectingPlatform ? (
                           <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin" />
                             Conectando...
                           </>
                         ) : (
@@ -325,65 +416,68 @@ export function IntegrationsManagement() {
           </div>
         </TabsContent>
 
-        <TabsContent value="whatsapp" className="space-y-6">
+        <TabsContent value="whatsapp" className="space-y-4 sm:space-y-6">
           <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-500">
-                  <MessageCircle className="w-5 h-5 text-white" />
+            <CardHeader className="pb-2 sm:pb-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-green-500">
+                  <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
                 <div>
-                  <CardTitle>WhatsApp Business</CardTitle>
-                  <p className="text-sm text-muted-foreground">
+                  <CardTitle className="text-base sm:text-lg">WhatsApp Business</CardTitle>
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                     Conecte seu WhatsApp para enviar relatórios automáticos
                   </p>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 sm:space-y-4 px-4 py-3 sm:p-6">
               {whatsappConnection?.status === 'connected' ? (
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Status:</span>
-                    <Badge className="bg-green-500">
+                    <span className="text-xs sm:text-sm text-muted-foreground">Status:</span>
+                    <Badge className="bg-green-500 text-xs">
                       <CheckCircle className="w-3 h-3 mr-1" />
                       Conectado
                     </Badge>
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Número:</span>
-                    <span className="text-sm font-mono">{whatsappConnection.phone_number}</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground">Número:</span>
+                    <span className="text-xs sm:text-sm font-mono truncate max-w-[150px] sm:max-w-none">{whatsappConnection.phone_number}</span>
                   </div>
 
                   <div className="flex justify-end pt-2">
                     <Button
                       variant="outline"
+                      size="sm"
                       onClick={() => setWhatsappConnection(null)}
+                      className="text-xs h-8"
                     >
-                      Desconectar
+                      <span className="sm:inline hidden">Desconectar</span>
+                      <span className="sm:hidden inline">Descon</span>
                     </Button>
                   </div>
                 </div>
               ) : whatsappConnection?.status === 'pending' ? (
-                <div className="text-center space-y-4">
+                <div className="text-center space-y-3 sm:space-y-4">
                   <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Aguardando leitura do QR Code...</span>
+                    <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                    <span className="text-xs sm:text-sm">Aguardando leitura do QR Code...</span>
                   </div>
                   
                   <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent className="sm:max-w-md max-w-[90vw]">
                       <DialogHeader>
-                        <DialogTitle className="text-center">Escaneie o QR Code</DialogTitle>
+                        <DialogTitle className="text-center text-base sm:text-lg">Escaneie o QR Code</DialogTitle>
                       </DialogHeader>
-                      <div className="text-center space-y-4">
+                      <div className="text-center space-y-3 sm:space-y-4">
                         <div className="flex justify-center">
-                          <div className="w-64 h-64 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                            <QrCode className="w-32 h-32 text-gray-400" />
+                          <div className="w-48 h-48 sm:w-64 sm:h-64 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                            <QrCode className="w-24 h-24 sm:w-32 sm:h-32 text-gray-400" />
                           </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           Abra o WhatsApp no seu celular, vá em Dispositivos Vinculados e escaneie este QR Code
                         </p>
                       </div>
@@ -392,13 +486,13 @@ export function IntegrationsManagement() {
                 </div>
               ) : (
                 <Button
-                  className="w-full"
+                  className="w-full text-xs sm:text-sm h-8 sm:h-10"
                   onClick={connectWhatsApp}
                   disabled={isConnecting === 'whatsapp'}
                 >
                   {isConnecting === 'whatsapp' ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin" />
                       Gerando QR Code...
                     </>
                   ) : (
@@ -411,6 +505,10 @@ export function IntegrationsManagement() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="diagnostic" className="space-y-4 sm:space-y-6">
+          <OAuthDiagnostic />
         </TabsContent>
       </Tabs>
     </div>

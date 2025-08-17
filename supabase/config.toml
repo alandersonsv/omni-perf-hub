@@ -10,9 +10,6 @@ max_rows = 1000
 
 [auth]
 enabled = true
-port = 9999
-external_url = "http://localhost:3000"
-email_template_dir = "./templates"
 
 [auth.email]
 enable_signup = true
@@ -36,5 +33,4 @@ verify_jwt = false
 
 [storage]
 enabled = true
-port = 54323
 file_size_limit = "50MiB"

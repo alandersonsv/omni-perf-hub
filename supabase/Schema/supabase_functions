@@ -1,0 +1,16 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE supabase_functions.hooks (
+  id bigint NOT NULL DEFAULT nextval('supabase_functions.hooks_id_seq'::regclass),
+  hook_table_id integer NOT NULL,
+  hook_name text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  request_id bigint,
+  CONSTRAINT hooks_pkey PRIMARY KEY (id)
+);
+CREATE TABLE supabase_functions.migrations (
+  version text NOT NULL,
+  inserted_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT migrations_pkey PRIMARY KEY (version)
+);

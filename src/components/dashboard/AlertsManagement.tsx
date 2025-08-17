@@ -58,7 +58,7 @@ export function AlertsManagement() {
         platforms: ['meta_ads', 'google_ads'],
         notify_time: '09:00',
         is_active: true,
-        webhook_url: 'https://webhook.example.com/low-budget',
+        webhook_url: '',
       },
       {
         id: '2',
