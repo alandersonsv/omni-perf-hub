@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Navigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { Loader2, Mail, Lock, Building, Phone } from 'lucide-react';
 
 export function Register() {
-  const { user } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -21,10 +22,6 @@ export function Register() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
-  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -59,9 +56,10 @@ export function Register() {
     }
 
     try {
-      // 1. Criar usuário no Supabase Auth
+      console.log('Tentando registrar usuário:', formData.email);
+      
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
+        email: formData.email.trim(),
         password: formData.password,
         options: {
           data: {
@@ -73,56 +71,38 @@ export function Register() {
       });
 
       if (authError) {
+        console.error('Erro no registro auth:', authError);
         throw authError;
       }
 
       if (authData.user) {
-        // 2. Criar agência na tabela agencies
-        const { data: agencyData, error: agencyError } = await supabase
-          .from('agencies')
-          .insert({
-            name: formData.agencyName,
-            email: formData.agencyEmail || formData.email,
-            phone: formData.agencyPhone,
-            subscription_plan: 'trial',
-            trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 dias
-          })
-          .select()
-          .single();
-
-        if (agencyError) {
-          throw agencyError;
-        }
-
-        // 3. Criar membro da equipe (owner)
-        const { error: teamError } = await supabase
-          .from('team_members')
-          .insert({
-            id: authData.user.id,
-            agency_id: agencyData.id,
-            email: formData.email,
-            role: 'owner',
-            accepted_at: new Date().toISOString()
-          });
-
-        if (teamError) {
-          throw teamError;
-        }
-
-        setSuccess('Conta criada com sucesso! Verifique seu email para confirmar a conta.');
+        console.log('Usuário criado com sucesso:', authData.user.email);
+        setSuccess('Conta criada com sucesso! Você pode fazer login agora.');
+        
+        setFormData({
+          email: '',
+          password: '',
+          confirmPassword: '',
+          agencyName: '',
+          agencyEmail: '',
+          agencyPhone: ''
+        });
+        
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
       }
     } catch (error: any) {
       console.error('Erro no registro:', error);
       
-      // Handle specific error cases
       if (error.message?.includes('User already registered') || error.message?.includes('already registered')) {
-        setError('Este email já está cadastrado. Use a opção "Esqueci a Senha" na página de login para recuperar sua conta.');
+        setError('Este email já está cadastrado. Tente fazer login ou use "Esqueci a Senha".');
       } else if (error.message?.includes('Invalid email')) {
-        setError('Email inválido. Verifique o formato do email e tente novamente.');
-      } else if (error.message?.includes('Password')) {
-        setError('Senha inválida. A senha deve ter pelo menos 6 caracteres.');
+        setError('Email inválido. Verifique o formato do email.');
+      } else if (error.message?.includes('Password') || error.message?.includes('Weak password')) {
+        setError('Senha deve ter pelo menos 6 caracteres e ser mais forte.');
       } else {
-        setError(error.message || 'Erro ao criar conta. Verifique os dados e tente novamente.');
+        setError('Erro ao criar conta. Verifique sua conexão e tente novamente.');
       }
     } finally {
       setIsLoading(false);
@@ -140,7 +120,6 @@ export function Register() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Dados do usuário */}
             <div className="space-y-2">
               <Label htmlFor="email">Email *</Label>
               <Input
@@ -180,7 +159,6 @@ export function Register() {
               />
             </div>
 
-            {/* Dados da agência */}
             <div className="border-t pt-4">
               <h3 className="text-sm font-medium mb-3">Dados da Agência</h3>
               

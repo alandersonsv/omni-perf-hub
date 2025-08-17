@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,18 +6,38 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Loader2, Mail, Lock } from 'lucide-react';
 
 export function Login() {
   const navigate = useNavigate();
+  const { login, user, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Removido o redirecionamento automático que causava loops
+  // Use useEffect for safer redirection to avoid race conditions
+  React.useEffect(() => {
+    if (user && !isLoading) {
+      // Check if user has agency, if not redirect to setup
+      if (user.user_metadata?.agency_id) {
+        navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/setup-agency', { replace: true });
+      }
+    }
+  }, [user, isLoading, navigate]);
+
+  // Show loading during redirect to prevent flash
+  if (user && !isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,34 +48,18 @@ export function Login() {
     try {
       console.log('Tentando fazer login com:', email);
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password
-      });
+      const success = await login(email.trim(), password);
 
-      if (error) {
-        console.error('Erro no login:', error);
-        throw error;
-      }
-
-      if (data.user) {
-        console.log('Login bem-sucedido:', data.user.email);
+      if (success) {
+        console.log('Login bem-sucedido');
         setSuccess('Login realizado com sucesso!');
-        
-        // Aguardar um pouco antes de redirecionar
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
+        // Redirecionamento será feito pelo useEffect quando user for atualizado
+      } else {
+        setError('Email ou senha inválidos. Verifique suas credenciais.');
       }
     } catch (error: any) {
       console.error('Erro no login:', error);
-      if (error.message?.includes('Invalid login credentials')) {
-        setError('Email ou senha inválidos. Verifique suas credenciais.');
-      } else if (error.message?.includes('Email not confirmed')) {
-        setError('Email não confirmado. Verifique sua caixa de entrada.');
-      } else {
-        setError('Erro ao fazer login. Verifique sua conexão e tente novamente.');
-      }
+      setError('Erro ao fazer login. Verifique sua conexão e tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
