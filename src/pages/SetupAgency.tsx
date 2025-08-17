@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Building2, Users, AlertCircle } from 'lucide-react';
 
 export function SetupAgency() {
-  const { user, logout } = useAuth();
+  const { user, signOut: logout } = useAuth();
   const [formData, setFormData] = useState({
     agencyName: '',
     agencyEmail: user?.email || '',

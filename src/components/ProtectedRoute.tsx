@@ -1,32 +1,93 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { ReactNode } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { ReactNode, useEffect } from 'react';
+
+// =====================================================
+// PROTECTED ROUTE: STATUS-BASED ROUTING
+// Baseado na nova arquitetura Database-First
+// =====================================================
+
+type UserStatus = 'loading' | 'no_agency' | 'onboarding_required' | 'ready' | 'error';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requireAgency?: boolean;
+  allowedStatuses?: UserStatus[];
+  fallbackPath?: string;
 }
 
-export function ProtectedRoute({ children, requireAgency = true }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth();
+export function ProtectedRoute({ 
+  children, 
+  allowedStatuses = ['ready'],
+  fallbackPath 
+}: ProtectedRouteProps) {
+  const { state } = useAuth();
+  const navigate = useNavigate();
 
-  // Show loading while checking authentication
-  if (isLoading) {
+  useEffect(() => {
+    if (!state.isLoading && state.user) {
+      // Roteamento baseado em status
+      switch (state.status) {
+        case 'no_agency':
+          if (!allowedStatuses.includes('no_agency')) {
+            console.log('User needs agency, redirecting to setup');
+            navigate('/setup-agency', { replace: true });
+          }
+          break;
+        case 'onboarding_required':
+          if (!allowedStatuses.includes('onboarding_required')) {
+            console.log('User needs onboarding, redirecting to complete');
+            navigate('/setup-agency', { replace: true });
+          }
+          break;
+        case 'ready':
+          if (!allowedStatuses.includes('ready') && fallbackPath) {
+            console.log('User ready but not allowed here, redirecting to:', fallbackPath);
+            navigate(fallbackPath, { replace: true });
+          }
+          break;
+        case 'error':
+          console.log('Auth error, redirecting to login');
+          navigate('/login', { replace: true });
+          break;
+      }
+    } else if (!state.isLoading && !state.user) {
+      console.log('No user, redirecting to login');
+      navigate('/login', { replace: true });
+    }
+  }, [state.status, state.isLoading, state.user, allowedStatuses, fallbackPath, navigate]);
+
+  // Loading state
+  if (state.isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
       </div>
     );
   }
 
-  // Redirect to login if not authenticated
-  if (!user) {
-    return <Navigate to="/login" replace />;
+  // Not authenticated
+  if (!state.user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Redirecionando para login...</p>
+        </div>
+      </div>
+    );
   }
 
-  // If agency is required but user doesn't have one, redirect to setup
-  if (requireAgency && !user.user_metadata?.agency_id) {
-    return <Navigate to="/setup-agency" replace />;
+  // Status not allowed
+  if (!allowedStatuses.includes(state.status)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Redirecionando...</p>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;

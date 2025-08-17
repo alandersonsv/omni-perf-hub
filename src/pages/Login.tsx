@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,31 +7,44 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, Lock } from 'lucide-react';
 
-export function Login() {
+export default function Login() {
   const navigate = useNavigate();
-  const { login, user, isLoading } = useAuth();
+  const { state, actions } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
-  // Use useEffect for safer redirection to avoid race conditions
-  React.useEffect(() => {
-    if (user && !isLoading) {
-      // Check if user has agency, if not redirect to setup
-      if (user.user_metadata?.agency_id) {
-        navigate('/dashboard', { replace: true });
-      } else {
-        navigate('/setup-agency', { replace: true });
+  // Redirect based on user status
+  useEffect(() => {
+    if (!state.isLoading && state.user) {
+      console.log('User logged in, status:', state.status);
+      switch (state.status) {
+        case 'ready':
+          navigate('/dashboard', { replace: true });
+          break;
+        case 'no_agency':
+        case 'onboarding_required':
+          navigate('/setup-agency', { replace: true });
+          break;
+        case 'error':
+          toast({
+            title: 'Erro de autenticação',
+            description: 'Houve um problema ao carregar seus dados. Tente fazer login novamente.',
+            variant: 'destructive'
+          });
+          break;
       }
     }
-  }, [user, isLoading, navigate]);
+  }, [state.status, state.isLoading, state.user, navigate, toast]);
 
   // Show loading during redirect to prevent flash
-  if (user && !isLoading) {
+  if (state.user && !state.isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -48,18 +61,33 @@ export function Login() {
     try {
       console.log('Tentando fazer login com:', email);
       
-      const success = await login(email.trim(), password);
+      const success = await actions.login(email.trim(), password);
 
       if (success) {
         console.log('Login bem-sucedido');
         setSuccess('Login realizado com sucesso!');
+        toast({
+          title: 'Login realizado com sucesso!',
+          description: 'Redirecionando...',
+        });
         // Redirecionamento será feito pelo useEffect quando user for atualizado
       } else {
         setError('Email ou senha inválidos. Verifique suas credenciais.');
+        toast({
+          title: 'Erro no login',
+          description: 'Email ou senha inválidos.',
+          variant: 'destructive'
+        });
       }
     } catch (error: any) {
       console.error('Erro no login:', error);
-      setError('Erro ao fazer login. Verifique sua conexão e tente novamente.');
+      const errorMessage = 'Erro ao fazer login. Verifique sua conexão e tente novamente.';
+      setError(errorMessage);
+      toast({
+        title: 'Erro no login',
+        description: errorMessage,
+        variant: 'destructive'
+      });
     } finally {
       setIsSubmitting(false);
     }
