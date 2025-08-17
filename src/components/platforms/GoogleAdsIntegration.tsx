@@ -259,7 +259,7 @@ const GoogleAdsIntegration: React.FC<GoogleAdsIntegrationProps> = ({ agencyId })
       
       acc[date].impressions += campaign.impressions || 0;
       acc[date].clicks += campaign.clicks || 0;
-      acc[date].cost += campaign.cost || 0;
+      acc[date].cost += campaign.total_spent || 0;
       acc[date].conversions += campaign.conversions || 0;
       acc[date].conversion_value += campaign.conversion_value || 0;
       
@@ -279,7 +279,7 @@ const GoogleAdsIntegration: React.FC<GoogleAdsIntegrationProps> = ({ agencyId })
     const baseSummary = campaigns.reduce((acc, campaign) => {
       acc.impressions += campaign.impressions || 0;
       acc.clicks += campaign.clicks || 0;
-      acc.cost += campaign.cost || 0;
+      acc.cost += campaign.total_spent || 0;
       acc.conversions += campaign.conversions || 0;
       acc.conversion_value += campaign.conversion_value || 0;
       
@@ -523,7 +523,7 @@ const GoogleAdsIntegration: React.FC<GoogleAdsIntegrationProps> = ({ agencyId })
                         <td className="text-right p-2">{campaign.impressions?.toLocaleString() || 0}</td>
                         <td className="text-right p-2">{campaign.clicks?.toLocaleString() || 0}</td>
                         <td className="text-right p-2">{campaign.ctr?.toFixed(2) || 0}%</td>
-                        <td className="text-right p-2">R$ {campaign.cost?.toFixed(2) || 0}</td>
+                        <td className="text-right p-2">R$ {campaign.total_spent?.toFixed(2) || 0}</td>
                         <td className="text-right p-2">{campaign.conversions?.toLocaleString() || 0}</td>
                         <td className="text-right p-2">R$ {campaign.cpa?.toFixed(2) || 0}</td>
                         <td className="text-right p-2">{campaign.roas?.toFixed(2) || 0}x</td>

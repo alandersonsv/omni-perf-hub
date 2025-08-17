@@ -1,29 +1,64 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BarChart3, Building2 } from 'lucide-react';
-import { getClientsByUserId } from '@/data/mockClientData';
+import { supabase } from '@/integrations/supabase/client';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { DashboardFilters } from '@/components/dashboard/DashboardFilters';
 import { PlatformContent } from '@/components/PlatformContent';
 import { FilterState } from '@/types/dashboardTypes';
+import type { Database } from '@/integrations/supabase/types';
+
+type Client = Database['public']['Tables']['agency_clients']['Row'];
 
 export function AnalyticsDashboard() {
   const { user } = useAuth();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState<string>('');
-  const [selectedPlatform, setSelectedPlatform] = useState('Meta Ads');
-  const [selectedPage, setSelectedPage] = useState('KPIs');
+  const [selectedPlatform, setSelectedPlatform] = useState('meta');
+  const [selectedPage, setSelectedPage] = useState('KPIs Principais & Funil');
   const [filters, setFilters] = useState<FilterState>({
-    dateRange: 'Últimos 30 dias',
-    campaign: 'Todas',
-    source: 'Todas',
-    device: 'Todos'
+    dateRange: {
+      from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      to: new Date().toISOString().split('T')[0]
+    },
+    campaign: 'all',
+    source: 'all',
+    device: 'all',
+    client: 'all'
   });
 
-  const userClients = getClientsByUserId(user?.id || '');
-  const selectedClientData = userClients.find(client => client.id === selectedClient);
+  useEffect(() => {
+    fetchClients();
+  }, [user]);
+
+  const fetchClients = async () => {
+    if (!user?.user_metadata?.agency_id) {
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      const { data, error } = await supabase
+        .from('agency_clients')
+        .select('*')
+        .eq('agency_id', user.user_metadata.agency_id)
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectedClientData = clients.find(client => client.id === selectedClient);
 
   return (
     <div className="space-y-6">
@@ -40,11 +75,11 @@ export function AnalyticsDashboard() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Selecionar Cliente</label>
               <Select value={selectedClient} onValueChange={setSelectedClient}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Escolha um cliente para visualizar os dados" />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={loading ? "Carregando clientes..." : "Selecione um cliente"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {userClients.map((client) => (
+                  {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       {client.name}
                     </SelectItem>
@@ -52,12 +87,19 @@ export function AnalyticsDashboard() {
                 </SelectContent>
               </Select>
             </div>
-
-            {selectedClientData && (
+            
+            {selectedClient && selectedClientData && (
               <Alert>
-                <Building2 className="w-4 h-4" />
                 <AlertDescription>
-                  Visualizando dados de: <strong>{selectedClientData.name}</strong>
+                  Cliente selecionado: <strong>{selectedClientData.name}</strong>
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {!loading && clients.length === 0 && (
+              <Alert>
+                <AlertDescription>
+                  Nenhum cliente encontrado. Adicione clientes na seção de Gerenciamento de Clientes.
                 </AlertDescription>
               </Alert>
             )}

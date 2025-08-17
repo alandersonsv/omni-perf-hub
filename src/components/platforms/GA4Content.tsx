@@ -70,16 +70,16 @@ export function GA4Content({ page, filters }: GA4ContentProps) {
       acc.pageviews += day.pageviews || 0;
       acc.conversions += day.conversions || 0;
       acc.revenue += day.revenue || 0;
-      acc.engagementRate += day.engagement_rate || 0;
+      acc.bounceRate += day.bounce_rate || 0;
       return acc;
-    }, { sessions: 0, users: 0, pageviews: 0, conversions: 0, revenue: 0, engagementRate: 0 });
+    }, { sessions: 0, users: 0, pageviews: 0, conversions: 0, revenue: 0, bounceRate: 0 });
 
-    const avgEngagementRate = ga4Data.length > 0 ? (totals.engagementRate / ga4Data.length) * 100 : 0;
+    const avgBounceRate = ga4Data.length > 0 ? (totals.bounceRate / ga4Data.length) * 100 : 0;
 
     return [
       { title: 'Sessões', value: totals.sessions.toLocaleString('pt-BR'), change: '+15%', changeType: 'positive' as const, icon: 'Users' },
       { title: 'Usuários', value: totals.users.toLocaleString('pt-BR'), change: '+12%', changeType: 'positive' as const, icon: 'User' },
-      { title: 'Taxa de Engajamento', value: `${avgEngagementRate.toFixed(1)}%`, change: '+2.1%', changeType: 'positive' as const, icon: 'Activity' },
+      { title: 'Taxa de Rejeição', value: `${avgBounceRate.toFixed(1)}%`, change: '-2.1%', changeType: 'positive' as const, icon: 'Activity' },
       { title: 'Pageviews', value: totals.pageviews.toLocaleString('pt-BR'), change: '+18%', changeType: 'positive' as const, icon: 'Eye' },
       { title: 'Conversões', value: totals.conversions.toString(), change: '+8%', changeType: 'positive' as const, icon: 'Target' },
       { title: 'Receita', value: `R$ ${totals.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, change: '+14%', changeType: 'positive' as const, icon: 'DollarSign' },

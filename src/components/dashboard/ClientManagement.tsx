@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Trash2, Plus, Building2 } from 'lucide-react';
+import { Trash2, Plus, Building2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -19,7 +19,10 @@ export function ClientManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newClient, setNewClient] = useState({ name: '', phone: '', email: '', cnpj: '', whatsapp_number: '' });
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+
+
 
   // Fetch clients from Supabase
   useEffect(() => {
@@ -54,25 +57,56 @@ export function ClientManagement() {
   const handleAddClient = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user?.user_metadata?.agency_id) return;
+    if (!user?.user_metadata?.agency_id) {
+      toast({
+        title: "Erro",
+        description: "Erro de autenticação. Faça login novamente.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (submitting) {
+      return;
+    }
+
+    // Validação dos campos obrigatórios
+    if (!newClient.name.trim()) {
+      toast({
+        title: "Erro",
+        description: "O campo Nome é obrigatório",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!newClient.email.trim()) {
+      toast({
+        title: "Erro",
+        description: "O campo Email é obrigatório",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
       const { data, error } = await supabase
         .from('agency_clients')
         .insert({
           agency_id: user.user_metadata.agency_id,
-          name: newClient.name,
-          phone: newClient.phone || null,
-          email: newClient.email || null,
-          cnpj: newClient.cnpj || null,
-          whatsapp_number: newClient.whatsapp_number || null,
+          name: newClient.name.trim(),
+          phone: newClient.phone.trim() || null,
+          email: newClient.email.trim(),
+          cnpj: newClient.cnpj.trim() || null,
+          whatsapp_number: newClient.whatsapp_number.trim() || null,
           is_active: true
         })
         .select()
         .single();
 
       if (error) throw error;
-      
       setClients([data, ...clients]);
       setNewClient({ name: '', phone: '', email: '', cnpj: '', whatsapp_number: '' });
       setIsDialogOpen(false);
@@ -85,9 +119,11 @@ export function ClientManagement() {
       console.error('Error adding client:', error);
       toast({
         title: "Erro",
-        description: "Erro ao adicionar cliente",
+        description: error instanceof Error ? error.message : "Erro ao adicionar cliente",
         variant: "destructive"
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -164,13 +200,14 @@ export function ClientManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email *</Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="contato@empresa.com"
                     value={newClient.email}
                     onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -182,8 +219,18 @@ export function ClientManagement() {
                     onChange={(e) => setNewClient({ ...newClient, whatsapp_number: e.target.value })}
                   />
                 </div>
-                <Button type="submit" className="w-full">
-                  Adicionar Cliente
+                <Button type="submit" className="w-full" disabled={submitting}>
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Adicionando...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Adicionar Cliente
+                    </>
+                  )}
                 </Button>
               </form>
             </DialogContent>

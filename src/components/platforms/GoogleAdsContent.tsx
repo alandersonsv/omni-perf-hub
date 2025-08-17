@@ -68,7 +68,7 @@ export function GoogleAdsContent({ page, filters }: GoogleAdsContentProps) {
     const totals = campaigns.reduce((acc, campaign) => {
       acc.impressions += campaign.impressions || 0;
       acc.clicks += campaign.clicks || 0;
-      acc.cost += campaign.cost || 0;
+      acc.cost += campaign.total_spent || 0;
       acc.conversions += campaign.conversions || 0;
       acc.conversionValue += campaign.conversion_value || 0;
       return acc;
@@ -97,7 +97,7 @@ export function GoogleAdsContent({ page, filters }: GoogleAdsContentProps) {
   const prepareChartData = () => {
     return campaigns.map(campaign => ({
       date: campaign.date,
-      investimento: campaign.cost || 0,
+      investimento: campaign.total_spent || 0,
       receita: campaign.conversion_value || 0,
       vendas: campaign.conversions || 0
     })).reverse(); // Reverse to show chronological order
@@ -111,7 +111,7 @@ export function GoogleAdsContent({ page, filters }: GoogleAdsContentProps) {
       const campaignId = campaign.campaign_id || 'unknown';
       if (!campaignMap.has(campaignId)) {
         campaignMap.set(campaignId, {
-          campaign: campaign.name || `Campanha ${campaignId}`,
+          campaign: campaign.campaign_name || `Campanha ${campaignId}`,
           investment: 0,
           revenue: 0,
           sales: 0,
@@ -121,7 +121,7 @@ export function GoogleAdsContent({ page, filters }: GoogleAdsContentProps) {
       }
       
       const campaignData = campaignMap.get(campaignId);
-      campaignData.investment += campaign.cost || 0;
+      campaignData.investment += campaign.total_spent || 0;
       campaignData.revenue += campaign.conversion_value || 0;
       campaignData.sales += campaign.conversions || 0;
       campaignData.impressions += campaign.impressions || 0;
