@@ -8,10 +8,14 @@ const Index = () => {
   const [activePlatform, setActivePlatform] = useState('meta');
   const [activePage, setActivePage] = useState('KPIs Principais & Funil');
   const [filters, setFilters] = useState<FilterState>({
-    dateRange: '30d',
+    dateRange: {
+      from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      to: new Date().toISOString().split('T')[0]
+    },
     campaign: 'all',
     source: 'all',
-    device: 'all'
+    device: 'all',
+    client: 'all'
   });
 
   return (

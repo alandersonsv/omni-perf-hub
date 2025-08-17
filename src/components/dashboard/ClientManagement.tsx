@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,42 +7,110 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Trash2, Plus, Building2 } from 'lucide-react';
-import { getClientsByUserId, addClient, deleteClient, Client } from '@/data/mockClientData';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+
+type Client = Database['public']['Tables']['agency_clients']['Row'];
 
 export function ClientManagement() {
   const { user } = useAuth();
-  const [clients, setClients] = useState(() => getClientsByUserId(user?.id || ''));
+  const [clients, setClients] = useState<Client[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newClient, setNewClient] = useState({ name: '', phone: '', email: '' });
+  const [newClient, setNewClient] = useState({ name: '', phone: '', email: '', cnpj: '', whatsapp_number: '' });
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const handleAddClient = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!user) return;
+  // Fetch clients from Supabase
+  useEffect(() => {
+    fetchClients();
+  }, [user]);
 
-    const client = addClient({
-      ...newClient,
-      userId: user.id
-    });
+  const fetchClients = async () => {
+    if (!user?.user_metadata?.agency_id) return;
     
-    setClients([...clients, client]);
-    setNewClient({ name: '', phone: '', email: '' });
-    setIsDialogOpen(false);
-    
-    toast({
-      title: "Sucesso",
-      description: "Cliente adicionado com sucesso"
-    });
+    try {
+      const { data, error } = await supabase
+        .from('agency_clients')
+        .select('*')
+        .eq('agency_id', user.user_metadata.agency_id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar clientes",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteClient = (clientId: string) => {
-    if (deleteClient(clientId)) {
+  const handleAddClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user?.user_metadata?.agency_id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('agency_clients')
+        .insert({
+          agency_id: user.user_metadata.agency_id,
+          name: newClient.name,
+          phone: newClient.phone || null,
+          email: newClient.email || null,
+          cnpj: newClient.cnpj || null,
+          whatsapp_number: newClient.whatsapp_number || null,
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setClients([data, ...clients]);
+      setNewClient({ name: '', phone: '', email: '', cnpj: '', whatsapp_number: '' });
+      setIsDialogOpen(false);
+      
+      toast({
+        title: "Sucesso",
+        description: "Cliente adicionado com sucesso"
+      });
+    } catch (error) {
+      console.error('Error adding client:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao adicionar cliente",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteClient = async (clientId: string) => {
+    try {
+      const { error } = await supabase
+        .from('agency_clients')
+        .update({ is_active: false })
+        .eq('id', clientId);
+
+      if (error) throw error;
+      
       setClients(clients.filter(client => client.id !== clientId));
       toast({
         title: "Sucesso",
         description: "Cliente removido com sucesso"
+      });
+    } catch (error) {
+      console.error('Error deleting client:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao remover cliente",
+        variant: "destructive"
       });
     }
   };
@@ -68,7 +136,7 @@ export function ClientManagement() {
               </DialogHeader>
               <form onSubmit={handleAddClient} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome</Label>
+                  <Label htmlFor="name">Nome *</Label>
                   <Input
                     id="name"
                     placeholder="Nome da empresa ou cliente"
@@ -78,13 +146,21 @@ export function ClientManagement() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="cnpj">CNPJ</Label>
+                  <Input
+                    id="cnpj"
+                    placeholder="00.000.000/0000-00"
+                    value={newClient.cnpj}
+                    onChange={(e) => setNewClient({ ...newClient, cnpj: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="phone">Telefone</Label>
                   <Input
                     id="phone"
                     placeholder="(11) 99999-9999"
                     value={newClient.phone}
                     onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
-                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -92,10 +168,18 @@ export function ClientManagement() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="cliente@email.com"
+                    placeholder="contato@empresa.com"
                     value={newClient.email}
                     onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
-                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp">WhatsApp</Label>
+                  <Input
+                    id="whatsapp"
+                    placeholder="(11) 99999-9999"
+                    value={newClient.whatsapp_number}
+                    onChange={(e) => setNewClient({ ...newClient, whatsapp_number: e.target.value })}
                   />
                 </div>
                 <Button type="submit" className="w-full">
@@ -106,7 +190,11 @@ export function ClientManagement() {
           </Dialog>
         </CardHeader>
         <CardContent>
-          {clients.length === 0 ? (
+          {loading ? (
+            <p className="text-center text-muted-foreground py-8">
+              Carregando clientes...
+            </p>
+          ) : clients.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Building2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>Nenhum cliente cadastrado ainda.</p>
@@ -117,20 +205,24 @@ export function ClientManagement() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
+                  <TableHead>CNPJ</TableHead>
                   <TableHead>Telefone</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Criado em</TableHead>
-                  <TableHead>Ações</TableHead>
+                  <TableHead>WhatsApp</TableHead>
+                  <TableHead>Data de Cadastro</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {clients.map((client) => (
                   <TableRow key={client.id}>
                     <TableCell className="font-medium">{client.name}</TableCell>
-                    <TableCell>{client.phone}</TableCell>
-                    <TableCell>{client.email}</TableCell>
-                    <TableCell>{new Date(client.createdAt).toLocaleDateString('pt-BR')}</TableCell>
-                    <TableCell>
+                    <TableCell>{client.cnpj || '-'}</TableCell>
+                    <TableCell>{client.phone || '-'}</TableCell>
+                    <TableCell>{client.email || '-'}</TableCell>
+                    <TableCell>{client.whatsapp_number || '-'}</TableCell>
+                    <TableCell>{new Date(client.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell className="text-right">
                       <Button
                         onClick={() => handleDeleteClient(client.id)}
                         variant="ghost"

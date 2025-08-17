@@ -1,13 +1,42 @@
--- Create enums
-CREATE TYPE public.subscription_plan AS ENUM ('trial', 'basic', 'premium');
-CREATE TYPE public.platform_type AS ENUM ('meta_ads', 'google_ads', 'ga4', 'search_console');
-CREATE TYPE public.report_frequency AS ENUM ('daily', 'weekly', 'monthly');
-CREATE TYPE public.alert_type AS ENUM ('low_budget', 'account_blocked', 'api_error', 'performance_drop');
-CREATE TYPE public.user_role AS ENUM ('owner', 'admin', 'analyst', 'viewer');
-CREATE TYPE public.connection_status AS ENUM ('disconnected', 'pending', 'connected');
+-- Create enums (with IF NOT EXISTS to avoid conflicts)
+DO $$ BEGIN
+    CREATE TYPE public.subscription_plan AS ENUM ('trial', 'basic', 'premium');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE public.platform_type AS ENUM ('meta_ads', 'google_ads', 'ga4', 'search_console');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE public.report_frequency AS ENUM ('daily', 'weekly', 'monthly');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE public.alert_type AS ENUM ('low_budget', 'account_blocked', 'api_error', 'performance_drop');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE public.user_role AS ENUM ('owner', 'admin', 'analyst', 'viewer');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE public.connection_status AS ENUM ('disconnected', 'pending', 'connected');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Create agencies table
-CREATE TABLE public.agencies (
+CREATE TABLE IF NOT EXISTS public.agencies (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
@@ -20,7 +49,7 @@ CREATE TABLE public.agencies (
 );
 
 -- Create agency_clients table
-CREATE TABLE public.agency_clients (
+CREATE TABLE IF NOT EXISTS public.agency_clients (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     agency_id UUID NOT NULL REFERENCES public.agencies(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -34,7 +63,7 @@ CREATE TABLE public.agency_clients (
 );
 
 -- Create integrations table
-CREATE TABLE public.integrations (
+CREATE TABLE IF NOT EXISTS public.integrations (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     agency_id UUID NOT NULL REFERENCES public.agencies(id) ON DELETE CASCADE,
     platform platform_type NOT NULL,
@@ -47,7 +76,7 @@ CREATE TABLE public.integrations (
 );
 
 -- Create reports_config table
-CREATE TABLE public.reports_config (
+CREATE TABLE IF NOT EXISTS public.reports_config (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     agency_id UUID NOT NULL REFERENCES public.agencies(id) ON DELETE CASCADE,
     client_id UUID NOT NULL REFERENCES public.agency_clients(id) ON DELETE CASCADE,
@@ -63,7 +92,7 @@ CREATE TABLE public.reports_config (
 );
 
 -- Create alerts_config table
-CREATE TABLE public.alerts_config (
+CREATE TABLE IF NOT EXISTS public.alerts_config (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     agency_id UUID NOT NULL REFERENCES public.agencies(id) ON DELETE CASCADE,
     alert_type alert_type NOT NULL,
@@ -77,7 +106,7 @@ CREATE TABLE public.alerts_config (
 );
 
 -- Create team_members table
-CREATE TABLE public.team_members (
+CREATE TABLE IF NOT EXISTS public.team_members (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     agency_id UUID NOT NULL REFERENCES public.agencies(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
@@ -88,7 +117,7 @@ CREATE TABLE public.team_members (
 );
 
 -- Create whatsapp_connections table
-CREATE TABLE public.whatsapp_connections (
+CREATE TABLE IF NOT EXISTS public.whatsapp_connections (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     agency_id UUID NOT NULL REFERENCES public.agencies(id) ON DELETE CASCADE,
     phone_number TEXT NOT NULL,
@@ -110,11 +139,13 @@ ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.whatsapp_connections ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies for agencies
+DROP POLICY IF EXISTS "Users can view their own agency" ON public.agencies;
 CREATE POLICY "Users can view their own agency" ON public.agencies
     FOR SELECT USING (auth.uid() IN (
         SELECT tm.id FROM public.team_members tm WHERE tm.agency_id = agencies.id
     ));
 
+DROP POLICY IF EXISTS "Users can update their own agency" ON public.agencies;
 CREATE POLICY "Users can update their own agency" ON public.agencies
     FOR UPDATE USING (auth.uid() IN (
         SELECT tm.id FROM public.team_members tm 
@@ -122,11 +153,13 @@ CREATE POLICY "Users can update their own agency" ON public.agencies
     ));
 
 -- Create RLS policies for agency_clients
+DROP POLICY IF EXISTS "Agency members can view clients" ON public.agency_clients;
 CREATE POLICY "Agency members can view clients" ON public.agency_clients
     FOR SELECT USING (auth.uid() IN (
         SELECT tm.id FROM public.team_members tm WHERE tm.agency_id = agency_clients.agency_id
     ));
 
+DROP POLICY IF EXISTS "Agency members can manage clients" ON public.agency_clients;
 CREATE POLICY "Agency members can manage clients" ON public.agency_clients
     FOR ALL USING (auth.uid() IN (
         SELECT tm.id FROM public.team_members tm 
@@ -134,11 +167,13 @@ CREATE POLICY "Agency members can manage clients" ON public.agency_clients
     ));
 
 -- Create RLS policies for integrations
+DROP POLICY IF EXISTS "Agency members can view integrations" ON public.integrations;
 CREATE POLICY "Agency members can view integrations" ON public.integrations
     FOR SELECT USING (auth.uid() IN (
         SELECT tm.id FROM public.team_members tm WHERE tm.agency_id = integrations.agency_id
     ));
 
+DROP POLICY IF EXISTS "Agency admins can manage integrations" ON public.integrations;
 CREATE POLICY "Agency admins can manage integrations" ON public.integrations
     FOR ALL USING (auth.uid() IN (
         SELECT tm.id FROM public.team_members tm 
@@ -146,11 +181,13 @@ CREATE POLICY "Agency admins can manage integrations" ON public.integrations
     ));
 
 -- Create RLS policies for reports_config
+DROP POLICY IF EXISTS "Agency members can view reports config" ON public.reports_config;
 CREATE POLICY "Agency members can view reports config" ON public.reports_config
     FOR SELECT USING (auth.uid() IN (
         SELECT tm.id FROM public.team_members tm WHERE tm.agency_id = reports_config.agency_id
     ));
 
+DROP POLICY IF EXISTS "Agency members can manage reports config" ON public.reports_config;
 CREATE POLICY "Agency members can manage reports config" ON public.reports_config
     FOR ALL USING (auth.uid() IN (
         SELECT tm.id FROM public.team_members tm 
@@ -158,11 +195,13 @@ CREATE POLICY "Agency members can manage reports config" ON public.reports_confi
     ));
 
 -- Create RLS policies for alerts_config
+DROP POLICY IF EXISTS "Agency members can view alerts config" ON public.alerts_config;
 CREATE POLICY "Agency members can view alerts config" ON public.alerts_config
     FOR SELECT USING (auth.uid() IN (
         SELECT tm.id FROM public.team_members tm WHERE tm.agency_id = alerts_config.agency_id
     ));
 
+DROP POLICY IF EXISTS "Agency members can manage alerts config" ON public.alerts_config;
 CREATE POLICY "Agency members can manage alerts config" ON public.alerts_config
     FOR ALL USING (auth.uid() IN (
         SELECT tm.id FROM public.team_members tm 
@@ -170,11 +209,13 @@ CREATE POLICY "Agency members can manage alerts config" ON public.alerts_config
     ));
 
 -- Create RLS policies for team_members
+DROP POLICY IF EXISTS "Agency members can view team" ON public.team_members;
 CREATE POLICY "Agency members can view team" ON public.team_members
     FOR SELECT USING (auth.uid() IN (
         SELECT tm.id FROM public.team_members tm WHERE tm.agency_id = team_members.agency_id
     ));
 
+DROP POLICY IF EXISTS "Agency owners/admins can manage team" ON public.team_members;
 CREATE POLICY "Agency owners/admins can manage team" ON public.team_members
     FOR ALL USING (auth.uid() IN (
         SELECT tm.id FROM public.team_members tm 
@@ -182,11 +223,13 @@ CREATE POLICY "Agency owners/admins can manage team" ON public.team_members
     ));
 
 -- Create RLS policies for whatsapp_connections
+DROP POLICY IF EXISTS "Agency members can view whatsapp connections" ON public.whatsapp_connections;
 CREATE POLICY "Agency members can view whatsapp connections" ON public.whatsapp_connections
     FOR SELECT USING (auth.uid() IN (
         SELECT tm.id FROM public.team_members tm WHERE tm.agency_id = whatsapp_connections.agency_id
     ));
 
+DROP POLICY IF EXISTS "Agency admins can manage whatsapp connections" ON public.whatsapp_connections;
 CREATE POLICY "Agency admins can manage whatsapp connections" ON public.whatsapp_connections
     FOR ALL USING (auth.uid() IN (
         SELECT tm.id FROM public.team_members tm 
@@ -194,31 +237,37 @@ CREATE POLICY "Agency admins can manage whatsapp connections" ON public.whatsapp
     ));
 
 -- Create updated_at triggers
+DROP TRIGGER IF EXISTS update_agencies_updated_at ON public.agencies;
 CREATE TRIGGER update_agencies_updated_at
     BEFORE UPDATE ON public.agencies
     FOR EACH ROW
     EXECUTE FUNCTION public.update_modified_column();
 
+DROP TRIGGER IF EXISTS update_agency_clients_updated_at ON public.agency_clients;
 CREATE TRIGGER update_agency_clients_updated_at
     BEFORE UPDATE ON public.agency_clients
     FOR EACH ROW
     EXECUTE FUNCTION public.update_modified_column();
 
+DROP TRIGGER IF EXISTS update_integrations_updated_at ON public.integrations;
 CREATE TRIGGER update_integrations_updated_at
     BEFORE UPDATE ON public.integrations
     FOR EACH ROW
     EXECUTE FUNCTION public.update_modified_column();
 
+DROP TRIGGER IF EXISTS update_reports_config_updated_at ON public.reports_config;
 CREATE TRIGGER update_reports_config_updated_at
     BEFORE UPDATE ON public.reports_config
     FOR EACH ROW
     EXECUTE FUNCTION public.update_modified_column();
 
+DROP TRIGGER IF EXISTS update_alerts_config_updated_at ON public.alerts_config;
 CREATE TRIGGER update_alerts_config_updated_at
     BEFORE UPDATE ON public.alerts_config
     FOR EACH ROW
     EXECUTE FUNCTION public.update_modified_column();
 
+DROP TRIGGER IF EXISTS update_whatsapp_connections_updated_at ON public.whatsapp_connections;
 CREATE TRIGGER update_whatsapp_connections_updated_at
     BEFORE UPDATE ON public.whatsapp_connections
     FOR EACH ROW

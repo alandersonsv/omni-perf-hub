@@ -63,6 +63,7 @@ CREATE INDEX IF NOT EXISTS google_ads_campaigns_kpi_agency_account_idx ON public
 CREATE INDEX IF NOT EXISTS google_ads_campaigns_kpi_date_idx ON public.google_ads_campaigns_kpi (date DESC);
 
 -- Add trigger to update updated_at column
+DROP TRIGGER IF EXISTS trg_update_google_ads_campaigns_kpi_updated_at ON public.google_ads_campaigns_kpi;
 CREATE TRIGGER trg_update_google_ads_campaigns_kpi_updated_at
 BEFORE UPDATE ON public.google_ads_campaigns_kpi
 FOR EACH ROW EXECUTE FUNCTION public.update_modified_column();

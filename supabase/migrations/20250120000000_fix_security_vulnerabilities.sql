@@ -24,53 +24,9 @@ BEGIN
 END
 $$;
 
--- Check if google_ads_campaigns table exists and fix any similar vulnerabilities
-DO $$
-BEGIN
-    IF EXISTS (SELECT FROM information_schema.tables WHEVITE_SUPABASE_URL=https://wmrygkfxnzuxkgnybkec.supabase.co
-VITE_SUPABASE_ANON_KEY=sua_anon_key_realRE table_schema = 'public' AND table_name = 'google_ads_campaigns') THEN
-        -- Remove any overly permissive policies
-        DROP POLICY IF EXISTS "Usuários autenticados podem ver campanhas" ON public.google_ads_campaigns;
-        DROP POLICY IF EXISTS "Authenticated users can view campaigns" ON public.google_ads_campaigns;
-        
-        -- Ensure RLS is enabled
-        ALTER TABLE public.google_ads_campaigns ENABLE ROW LEVEL SECURITY;
-        
-        -- Create proper agency-based access policy
-        DROP POLICY IF EXISTS "Agency members can view Google Ads campaigns" ON public.google_ads_campaigns;
-        CREATE POLICY "Agency members can view Google Ads campaigns"
-        ON public.google_ads_campaigns
-        FOR SELECT
-        USING (
-          auth.uid() IN (
-            SELECT tm.id FROM public.team_members tm 
-            WHERE tm.agency_id = google_ads_campaigns.agency_id
-              AND tm.role IN ('owner', 'admin', 'analyst', 'viewer')
-          )
-        );
-        
-        -- Create policy for agency admins to manage campaigns
-        DROP POLICY IF EXISTS "Agency admins can manage Google Ads campaigns" ON public.google_ads_campaigns;
-        CREATE POLICY "Agency admins can manage Google Ads campaigns"
-        ON public.google_ads_campaigns
-        FOR ALL
-        USING (
-          auth.uid() IN (
-            SELECT tm.id FROM public.team_members tm
-            WHERE tm.agency_id = google_ads_campaigns.agency_id
-              AND tm.role IN ('owner', 'admin')
-          )
-        )
-        WITH CHECK (
-          auth.uid() IN (
-            SELECT tm.id FROM public.team_members tm
-            WHERE tm.agency_id = google_ads_campaigns.agency_id
-              AND tm.role IN ('owner', 'admin')
-          )
-        );
-    END IF;
-END
-$$;
+-- Note: google_ads_campaigns table doesn't have agency_id column
+-- Security policies are handled by google_ads_campaigns_kpi table instead
+-- which has proper agency_id column and RLS policies
 
 -- Add audit logging for sensitive data access
 CREATE OR REPLACE FUNCTION log_sensitive_data_access()

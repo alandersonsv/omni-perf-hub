@@ -1,8 +1,12 @@
 export interface FilterState {
-  dateRange: string;
+  dateRange: {
+    from: string;
+    to: string;
+  };
   campaign: string;
   source: string;
   device: string;
+  client: string;
 }
 
 export interface MetricKPI {
