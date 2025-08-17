@@ -20,13 +20,14 @@ CREATE TABLE IF NOT EXISTS public.meta_ads_insights_daily (
   roas NUMERIC,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (agency_id, account_id, COALESCE(campaign_id, ''), COALESCE(adset_id, ''), COALESCE(ad_id, ''), date)
+  UNIQUE (agency_id, account_id, campaign_id, adset_id, ad_id, date)
 );
 
 ALTER TABLE public.meta_ads_insights_daily ENABLE ROW LEVEL SECURITY;
 
 -- View policy: agency members
-CREATE POLICY IF NOT EXISTS "Agency members can view meta ads insights"
+DROP POLICY IF EXISTS "Agency members can view meta ads insights" ON public.meta_ads_insights_daily;
+CREATE POLICY "Agency members can view meta ads insights"
 ON public.meta_ads_insights_daily
 FOR SELECT
 USING (
@@ -36,7 +37,8 @@ USING (
 );
 
 -- Manage policy: owners/admins
-CREATE POLICY IF NOT EXISTS "Agency admins can manage meta ads insights"
+DROP POLICY IF EXISTS "Agency admins can manage meta ads insights" ON public.meta_ads_insights_daily;
+CREATE POLICY "Agency admins can manage meta ads insights"
 ON public.meta_ads_insights_daily
 FOR ALL
 USING (
@@ -85,7 +87,8 @@ CREATE TABLE IF NOT EXISTS public.ga4_daily (
 
 ALTER TABLE public.ga4_daily ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Agency members can view GA4"
+DROP POLICY IF EXISTS "Agency members can view GA4" ON public.ga4_daily;
+CREATE POLICY "Agency members can view GA4"
 ON public.ga4_daily
 FOR SELECT
 USING (
@@ -94,7 +97,8 @@ USING (
   )
 );
 
-CREATE POLICY IF NOT EXISTS "Agency admins can manage GA4"
+DROP POLICY IF EXISTS "Agency admins can manage GA4" ON public.ga4_daily;
+CREATE POLICY "Agency admins can manage GA4"
 ON public.ga4_daily
 FOR ALL
 USING (
@@ -140,7 +144,8 @@ CREATE TABLE IF NOT EXISTS public.search_console_pages_daily (
 
 ALTER TABLE public.search_console_pages_daily ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Agency members can view SC pages"
+DROP POLICY IF EXISTS "Agency members can view SC pages" ON public.search_console_pages_daily;
+CREATE POLICY "Agency members can view SC pages"
 ON public.search_console_pages_daily
 FOR SELECT
 USING (
@@ -149,7 +154,8 @@ USING (
   )
 );
 
-CREATE POLICY IF NOT EXISTS "Agency admins can manage SC pages"
+DROP POLICY IF EXISTS "Agency admins can manage SC pages" ON public.search_console_pages_daily;
+CREATE POLICY "Agency admins can manage SC pages"
 ON public.search_console_pages_daily
 FOR ALL
 USING (
@@ -195,7 +201,8 @@ CREATE TABLE IF NOT EXISTS public.alerts_log (
 
 ALTER TABLE public.alerts_log ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Agency members can view alerts log"
+DROP POLICY IF EXISTS "Agency members can view alerts log" ON public.alerts_log;
+CREATE POLICY "Agency members can view alerts log"
 ON public.alerts_log
 FOR SELECT
 USING (
@@ -204,7 +211,8 @@ USING (
   )
 );
 
-CREATE POLICY IF NOT EXISTS "Agency admins can manage alerts log"
+DROP POLICY IF EXISTS "Agency admins can manage alerts log" ON public.alerts_log;
+CREATE POLICY "Agency admins can manage alerts log"
 ON public.alerts_log
 FOR ALL
 USING (
@@ -236,7 +244,8 @@ CREATE TABLE IF NOT EXISTS public.n8n_events (
 
 ALTER TABLE public.n8n_events ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Agency members can view n8n events"
+DROP POLICY IF EXISTS "Agency members can view n8n events" ON public.n8n_events;
+CREATE POLICY "Agency members can view n8n events"
 ON public.n8n_events
 FOR SELECT
 USING (
@@ -245,7 +254,8 @@ USING (
   )
 );
 
-CREATE POLICY IF NOT EXISTS "Agency admins can manage n8n events"
+DROP POLICY IF EXISTS "Agency admins can manage n8n events" ON public.n8n_events;
+CREATE POLICY "Agency admins can manage n8n events"
 ON public.n8n_events
 FOR ALL
 USING (
@@ -277,7 +287,8 @@ CREATE TABLE IF NOT EXISTS public.ai_requests (
 
 ALTER TABLE public.ai_requests ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Manage own AI requests or admin"
+DROP POLICY IF EXISTS "Manage own AI requests or admin" ON public.ai_requests;
+CREATE POLICY "Manage own AI requests or admin"
 ON public.ai_requests
 FOR ALL
 USING (
@@ -321,7 +332,8 @@ CREATE TABLE IF NOT EXISTS public.ai_results (
 
 ALTER TABLE public.ai_results ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Agency members can view AI results"
+DROP POLICY IF EXISTS "Agency members can view AI results" ON public.ai_results;
+CREATE POLICY "Agency members can view AI results"
 ON public.ai_results
 FOR SELECT
 USING (
@@ -330,7 +342,8 @@ USING (
   )
 );
 
-CREATE POLICY IF NOT EXISTS "Agency admins can manage AI results"
+DROP POLICY IF EXISTS "Agency admins can manage AI results" ON public.ai_results;
+CREATE POLICY "Agency admins can manage AI results"
 ON public.ai_results
 FOR ALL
 USING (

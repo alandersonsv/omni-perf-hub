@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS public.google_ads_campaigns_kpi (
 ALTER TABLE public.google_ads_campaigns_kpi ENABLE ROW LEVEL SECURITY;
 
 -- Create policy for agency members to view Google Ads campaign data
-CREATE POLICY IF NOT EXISTS "Agency members can view Google Ads campaign data"
+DROP POLICY IF EXISTS "Agency members can view Google Ads campaign data" ON public.google_ads_campaigns_kpi;
+CREATE POLICY "Agency members can view Google Ads campaign data"
 ON public.google_ads_campaigns_kpi
 FOR SELECT
 USING (
@@ -36,7 +37,8 @@ USING (
 );
 
 -- Create policy for agency admins to manage Google Ads campaign data
-CREATE POLICY IF NOT EXISTS "Agency admins can manage Google Ads campaign data"
+DROP POLICY IF EXISTS "Agency admins can manage Google Ads campaign data" ON public.google_ads_campaigns_kpi;
+CREATE POLICY "Agency admins can manage Google Ads campaign data"
 ON public.google_ads_campaigns_kpi
 FOR ALL
 USING (
