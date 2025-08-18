@@ -19,6 +19,7 @@ import { Integrations } from "@/pages/Integrations";
 import { OAuthCallback } from "@/pages/OAuthCallback";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
+import Homepage from "@/pages/Homepage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,8 @@ const App = () => (
             {/* Documentos Legais - URLs não indexáveis */}
             <Route path="/legal/privacy-policy-2025-confidential" element={<PrivacyPolicy />} />
             <Route path="/legal/terms-of-service-2025-confidential" element={<TermsOfService />} />
+            {/* Homepage */}
+            <Route path="/homepage" element={<Homepage />} />
             <Route path="/" element={<Login />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
