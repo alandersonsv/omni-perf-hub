@@ -12,6 +12,7 @@ import { ForgotPassword } from "@/pages/ForgotPassword";
 import { ResetPassword } from "@/pages/ResetPassword";
 import { SetupAgency } from "@/pages/SetupAgency";
 import { Debug } from "@/pages/Debug";
+import AuthDebug from "@/pages/AuthDebug";
 import { SimpleLogin } from "@/pages/SimpleLogin";
 import { SimpleDashboard } from "@/pages/SimpleDashboard";
 import { Dashboard } from "@/pages/Dashboard";
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/setup-agency" element={<SetupAgency />} />
             <Route path="/debug" element={<Debug />} />
+            <Route path="/auth-debug" element={<AuthDebug />} />
             <Route path="/simple-login" element={
               <SimpleAuthProvider>
                 <SimpleLogin />

@@ -19,35 +19,91 @@ export default function Login() {
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  
+  // Forçar limpeza completa da sessão ao carregar a página de login
+  useEffect(() => {
+    const clearSession = () => {
+      console.log('🧹 Login page loaded, forcing complete session cleanup');
+      
+      // Limpar localStorage do Supabase
+      const keys = Object.keys(localStorage);
+      const removedKeys: string[] = [];
+      
+      keys.forEach(key => {
+        if (key.startsWith('sb-') || key.includes('supabase')) {
+          localStorage.removeItem(key);
+          removedKeys.push(key);
+        }
+      });
+      
+      console.log('🗑️ Removed localStorage keys:', removedKeys);
+      
+      // Limpar sessionStorage também
+      const sessionKeys = Object.keys(sessionStorage);
+      sessionKeys.forEach(key => {
+        if (key.startsWith('sb-') || key.includes('supabase')) {
+          sessionStorage.removeItem(key);
+          console.log('🗑️ Removed sessionStorage key:', key);
+        }
+      });
+      
+      // Forçar reload para garantir estado limpo
+      console.log('🔄 Forcing page reload to ensure clean state');
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    };
+    
+    // Só executar uma vez
+    const hasExecuted = sessionStorage.getItem('login-cleanup-executed');
+    if (!hasExecuted) {
+      sessionStorage.setItem('login-cleanup-executed', 'true');
+      clearSession();
+    }
+  }, []);
 
   // Redirect based on user status
   useEffect(() => {
+    console.log('🔄 Login useEffect triggered:', {
+      isLoading: state.isLoading,
+      hasUser: !!state.user,
+      status: state.status,
+      userEmail: state.user?.email
+    });
+    
     if (!state.isLoading && state.user) {
-      console.log('User logged in, status:', state.status);
+      console.log('🚀 User logged in, redirecting based on status:', state.status);
       switch (state.status) {
         case 'ready':
+          console.log('➡️ Redirecting to dashboard');
           navigate('/dashboard', { replace: true });
           break;
         case 'no_agency':
         case 'onboarding_required':
+          console.log('➡️ Redirecting to setup-agency');
           navigate('/setup-agency', { replace: true });
           break;
         case 'error':
+          console.log('❌ Auth error, showing toast');
           toast({
             title: 'Erro de autenticação',
             description: 'Houve um problema ao carregar seus dados. Tente fazer login novamente.',
             variant: 'destructive'
           });
           break;
+        default:
+          console.log('⏳ Status not ready for redirect:', state.status);
       }
     }
   }, [state.status, state.isLoading, state.user, navigate, toast]);
 
   // Show loading during redirect to prevent flash
-  if (state.user && !state.isLoading) {
+  if (state.user && !state.isLoading && state.status === 'ready') {
+    console.log('🔄 Showing redirect loading screen');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-2 text-sm text-gray-600">Redirecionando...</span>
       </div>
     );
   }
