@@ -62,9 +62,10 @@ const App = () => (
             {/* Documentos Legais - URLs não indexáveis */}
             <Route path="/legal/privacy-policy-2025-confidential" element={<PrivacyPolicy />} />
             <Route path="/legal/terms-of-service-2025-confidential" element={<TermsOfService />} />
-            {/* Homepage */}
+            {/* Homepage como página inicial */}
+            <Route path="/" element={<Homepage />} />
+            {/* Manter rota /homepage para compatibilidade */}
             <Route path="/homepage" element={<Homepage />} />
-            <Route path="/" element={<Login />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
