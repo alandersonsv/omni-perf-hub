@@ -18,16 +18,7 @@ VITE_OAUTH_STATE_SECRET=your_secure_random_string_here
 ```
 
 ### **Variáveis Secretas (SEM VITE_)**
-```
-GOOGLE_CLIENT_SECRET=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
-GOOGLE_ADS_DEVELOPER_TOKEN=your_google_ads_developer_token
-META_APP_SECRET=your_meta_app_secret
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-GOOGLE_ADS_WEBHOOK_SECRET=your_google_ads_webhook_secret
-META_WEBHOOK_SECRET=your_meta_webhook_secret
-WOOCOMMERCE_WEBHOOK_SECRET=your_woocommerce_webhook_secret
-OAUTH_STATE_SECRET=your_oauth_state_secret
-N8N_WEBHOOK_URL=your_n8n_webhook_url
+``
 ```
 
 ---
