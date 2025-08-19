@@ -253,6 +253,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Auth state listener
   useEffect(() => {
     console.log('🔧 Setting up auth state listener (useEffect executed)');
+    console.log('🏭 Environment info:', {
+      NODE_ENV: process.env.NODE_ENV,
+      PROD: import.meta.env.PROD,
+      SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+      SUPABASE_KEY_PREFIX: import.meta.env.VITE_SUPABASE_ANON_KEY?.substring(0, 20)
+    });
     console.log('📊 Current state when setting up listener:', {
       hasUser: !!state.user,
       status: state.status,
@@ -281,12 +287,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (event === 'SIGNED_IN') {
-          console.log('🎉 User signed in, calling loadCompleteUserData');
+          console.log('🎉 MAIN LISTENER: User signed in, calling loadCompleteUserData');
+          console.log('📊 MAIN LISTENER: Session details:', {
+            userId: session.user?.id,
+            email: session.user?.email,
+            hasMetadata: !!session.user?.user_metadata,
+            agencyId: session.user?.user_metadata?.agency_id
+          });
+          
           try {
             await loadCompleteUserData(session.user);
-            console.log('✅ LoadCompleteUserData call completed');
+            console.log('✅ MAIN LISTENER: LoadCompleteUserData call completed');
           } catch (error) {
-            console.error('❌ Error in loadCompleteUserData:', error);
+            console.error('❌ MAIN LISTENER: Error in loadCompleteUserData:', error);
           }
         } else if (event === 'TOKEN_REFRESHED') {
           console.log('Token refreshed, checking if reload needed');
@@ -332,6 +345,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Fallback polling para produção
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout;
+    let timeoutId: NodeJS.Timeout;
+    
+    // Só ativar fallback se estado estiver loading por muito tempo
+    timeoutId = setTimeout(() => {
+      if (state.isLoading && !state.user) {
+        console.log('⚠️ FALLBACK: Estado loading por muito tempo, iniciando polling');
+        
+        const pollSession = async () => {
+          try {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            
+            if (error) {
+              console.error('❌ FALLBACK: Erro ao verificar sessão:', error);
+              return;
+            }
+            
+            if (session?.user && !state.user) {
+              console.log('🔄 FALLBACK: Sessão detectada via polling, forçando carregamento');
+              await loadCompleteUserData(session.user);
+              
+              // Parar polling após sucesso
+              if (pollInterval) {
+                clearInterval(pollInterval);
+                console.log('✅ FALLBACK: Polling interrompido após sucesso');
+              }
+            }
+          } catch (error) {
+            console.error('💥 FALLBACK: Exceção durante polling:', error);
+          }
+        };
+        
+        // Iniciar polling a cada 3 segundos
+        pollInterval = setInterval(pollSession, 3000);
+        console.log('🔄 FALLBACK: Polling iniciado (3s interval)');
+        
+        // Parar polling após 30 segundos
+        setTimeout(() => {
+          if (pollInterval) {
+            clearInterval(pollInterval);
+            console.log('⏰ FALLBACK: Polling interrompido por timeout (30s)');
+          }
+        }, 30000);
+      }
+    }, 5000); // Aguardar 5 segundos antes de ativar fallback
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [state.isLoading, state.user]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
