@@ -78,32 +78,123 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading: true
   });
   
-  // Ref para acessar o estado atual dentro de closures
-  const stateRef = useRef(state);
-  stateRef.current = state;
-  
-  // Ref para controlar execuções simultâneas de loadCompleteUserData
+  // Sistema avançado de controle de execução
   const loadingRef = useRef(false);
+  const stateRef = useRef(state);
+  const executionCountRef = useRef(0);
+  const lastExecutionTimeRef = useRef(0);
+  const watchdogRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Atualizar ref sempre que state mudar
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
-  // Função para carregar dados usando as tabelas existentes (team_members + agencies)
-  const loadCompleteUserData = async (user: SupabaseUser) => {
-    console.log('🚀 LoadCompleteUserData called for:', user.email);
-    console.log('🔒 LoadingRef current state:', loadingRef.current);
-    
-    // Evitar execuções simultâneas
-    if (loadingRef.current) {
-      console.log('⏸️ LoadCompleteUserData already running, skipping');
-      return;
+  // Sistema de Watchdog para detectar estados travados
+  const startWatchdog = () => {
+    if (watchdogRef.current) {
+      clearTimeout(watchdogRef.current);
     }
     
-    console.log('✅ Starting loadCompleteUserData execution');
+    watchdogRef.current = setTimeout(() => {
+      const currentState = stateRef.current;
+      const timeSinceLastExecution = Date.now() - lastExecutionTimeRef.current;
+      
+      console.log('🐕 WATCHDOG: Verificando estado travado:', {
+        isLoading: currentState.isLoading,
+        status: currentState.status,
+        hasUser: !!currentState.user,
+        loadingRefActive: loadingRef.current,
+        timeSinceLastExecution,
+        executionCount: executionCountRef.current
+      });
+      
+      // Detectar estado travado: loading há mais de 15 segundos
+      if (currentState.isLoading && currentState.status === 'loading' && timeSinceLastExecution > 15000) {
+        console.log('🚨 WATCHDOG: Estado travado detectado! Forçando recuperação...');
+        forceRecovery();
+      }
+    }, 20000); // Verificar a cada 20 segundos
+  };
+
+  // Sistema de recuperação forçada
+  const forceRecovery = async () => {
+    console.log('🔧 FORCE RECOVERY: Iniciando recuperação de emergência');
+    
+    try {
+      // Reset completo do estado de loading
+      loadingRef.current = false;
+      
+      // Verificar sessão atual
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('❌ FORCE RECOVERY: Erro ao verificar sessão:', error);
+        setState(prev => ({ ...prev, isLoading: false, status: 'error' }));
+        return;
+      }
+      
+      if (session?.user) {
+        console.log('🔄 FORCE RECOVERY: Sessão encontrada, forçando loadCompleteUserData');
+        await loadCompleteUserData(session.user, true); // Força execução
+      } else {
+        console.log('❌ FORCE RECOVERY: Nenhuma sessão encontrada');
+        setState({
+          user: null,
+          userProfile: null,
+          agency: null,
+          status: 'loading',
+          isLoading: false
+        });
+      }
+    } catch (error) {
+      console.error('💥 FORCE RECOVERY: Erro durante recuperação:', error);
+      setState(prev => ({ ...prev, isLoading: false, status: 'error' }));
+    }
+  };
+
+  // Função para carregar dados usando as tabelas existentes (team_members + agencies)
+  const loadCompleteUserData = async (user: SupabaseUser, forceExecution = false) => {
+    const executionId = ++executionCountRef.current;
+    const startTime = Date.now();
+    lastExecutionTimeRef.current = startTime;
+    
+    console.log(`🚀 LoadCompleteUserData #${executionId} iniciado:`, {
+      email: user.email,
+      forceExecution,
+      loadingRefActive: loadingRef.current,
+      currentStatus: stateRef.current.status
+    });
+    
+    if (loadingRef.current && !forceExecution) {
+      console.log(`⚠️ LoadCompleteUserData #${executionId} já em execução, aguardando...`);
+      
+      // Aguardar até 5 segundos pela execução atual
+      let waitTime = 0;
+      while (loadingRef.current && waitTime < 5000) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        waitTime += 100;
+      }
+      
+      if (loadingRef.current) {
+        console.log(`🔥 LoadCompleteUserData #${executionId} timeout de espera, forçando execução`);
+        loadingRef.current = false; // Reset forçado
+      } else {
+        console.log(`✅ LoadCompleteUserData #${executionId} execução anterior concluída`);
+        return;
+      }
+    }
+    
     loadingRef.current = true;
     
-    // Timeout de segurança para resetar loadingRef
+    // Timeout de segurança mais agressivo
     const timeoutId = setTimeout(() => {
-      console.log('⚠️ LoadCompleteUserData timeout, resetting loadingRef');
+      console.log(`⚠️ LoadCompleteUserData #${executionId} timeout (8s), resetando loadingRef`);
       loadingRef.current = false;
-    }, 10000);
+    }, 8000);
+    
+    // Iniciar watchdog
+    startWatchdog();
     
     try {
       console.log('🔄 Loading complete user data for:', user.email);
@@ -236,7 +327,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
     } catch (error) {
-      console.error('Error in loadCompleteUserData:', error);
+      console.error(`❌ LoadCompleteUserData #${executionId} erro:`, error);
       setState(prev => ({ 
         ...prev, 
         isLoading: false, 
@@ -244,9 +335,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: user as User
       }));
     } finally {
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      
       clearTimeout(timeoutId);
+      if (watchdogRef.current) {
+        clearTimeout(watchdogRef.current);
+        watchdogRef.current = null;
+      }
       loadingRef.current = false;
-      console.log('🏁 LoadCompleteUserData finished, loadingRef reset');
+      
+      console.log(`🏁 LoadCompleteUserData #${executionId} finalizado:`, {
+        duration: `${duration}ms`,
+        finalStatus: stateRef.current.status,
+        hasUser: !!stateRef.current.user,
+        isLoading: stateRef.current.isLoading
+      });
     }
   };
 
@@ -292,14 +396,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             userId: session.user?.id,
             email: session.user?.email,
             hasMetadata: !!session.user?.user_metadata,
-            agencyId: session.user?.user_metadata?.agency_id
+            agencyId: session.user?.user_metadata?.agency_id,
+            currentState: stateRef.current.status,
+            loadingRefActive: loadingRef.current
           });
           
           try {
-            await loadCompleteUserData(session.user);
+            // Verificar se precisa forçar execução
+            const shouldForce = stateRef.current.status === 'loading' && loadingRef.current;
+            if (shouldForce) {
+              console.log('🔥 MAIN LISTENER: Estado travado detectado, forçando execução');
+            }
+            
+            await loadCompleteUserData(session.user, shouldForce);
             console.log('✅ MAIN LISTENER: LoadCompleteUserData call completed');
           } catch (error) {
             console.error('❌ MAIN LISTENER: Error in loadCompleteUserData:', error);
+            // Em caso de erro, tentar recuperação após 2 segundos
+            setTimeout(() => {
+              console.log('🔄 MAIN LISTENER: Tentando recuperação após erro');
+              forceRecovery();
+            }, 2000);
           }
         } else if (event === 'TOKEN_REFRESHED') {
           console.log('Token refreshed, checking if reload needed');
@@ -346,53 +463,84 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Fallback polling para produção
+  // Sistema de fallback inteligente
   useEffect(() => {
     let pollInterval: NodeJS.Timeout;
     let timeoutId: NodeJS.Timeout;
+    let pollCount = 0;
+    const maxPolls = 10; // Máximo 10 tentativas
     
-    // Só ativar fallback se estado estiver loading por muito tempo
+    // Ativar fallback se estado estiver loading por muito tempo
     timeoutId = setTimeout(() => {
-      if (state.isLoading && !state.user) {
-        console.log('⚠️ FALLBACK: Estado loading por muito tempo, iniciando polling');
+      const currentState = stateRef.current;
+      
+      if (currentState.isLoading && !currentState.user) {
+        console.log('⚠️ SMART FALLBACK: Estado loading detectado, iniciando polling inteligente');
         
-        const pollSession = async () => {
+        const smartPoll = async () => {
+          pollCount++;
+          console.log(`🔄 SMART FALLBACK: Poll #${pollCount}/${maxPolls}`);
+          
           try {
             const { data: { session }, error } = await supabase.auth.getSession();
             
             if (error) {
-              console.error('❌ FALLBACK: Erro ao verificar sessão:', error);
+              console.error('❌ SMART FALLBACK: Erro ao verificar sessão:', error);
               return;
             }
             
-            if (session?.user && !state.user) {
-              console.log('🔄 FALLBACK: Sessão detectada via polling, forçando carregamento');
-              await loadCompleteUserData(session.user);
+            if (session?.user) {
+              console.log('🎯 SMART FALLBACK: Sessão detectada, usando força de recuperação');
               
-              // Parar polling após sucesso
+              // Parar polling imediatamente
               if (pollInterval) {
                 clearInterval(pollInterval);
-                console.log('✅ FALLBACK: Polling interrompido após sucesso');
+                console.log('⏹️ SMART FALLBACK: Polling interrompido');
               }
+              
+              // Usar sistema de recuperação forçada
+              await forceRecovery();
+              
+            } else if (pollCount >= maxPolls) {
+              console.log('❌ SMART FALLBACK: Máximo de tentativas atingido, parando polling');
+              if (pollInterval) {
+                clearInterval(pollInterval);
+              }
+              
+              // Definir estado como erro após esgotar tentativas
+              setState(prev => ({
+                ...prev,
+                isLoading: false,
+                status: 'error'
+              }));
             }
           } catch (error) {
-            console.error('💥 FALLBACK: Exceção durante polling:', error);
+            console.error('💥 SMART FALLBACK: Exceção durante polling:', error);
+            
+            if (pollCount >= maxPolls) {
+              if (pollInterval) {
+                clearInterval(pollInterval);
+              }
+            }
           }
         };
         
-        // Iniciar polling a cada 3 segundos
-        pollInterval = setInterval(pollSession, 3000);
-        console.log('🔄 FALLBACK: Polling iniciado (3s interval)');
+        // Iniciar polling a cada 2 segundos (mais agressivo)
+        pollInterval = setInterval(smartPoll, 2000);
+        console.log('🔄 SMART FALLBACK: Polling iniciado (2s interval)');
         
-        // Parar polling após 30 segundos
+        // Executar primeira verificação imediatamente
+        smartPoll();
+        
+        // Parar polling após 25 segundos como segurança
         setTimeout(() => {
           if (pollInterval) {
             clearInterval(pollInterval);
-            console.log('⏰ FALLBACK: Polling interrompido por timeout (30s)');
+            console.log('⏰ SMART FALLBACK: Polling interrompido por timeout de segurança (25s)');
           }
-        }, 30000);
+        }, 25000);
       }
-    }, 5000); // Aguardar 5 segundos antes de ativar fallback
+    }, 3000); // Aguardar apenas 3 segundos antes de ativar fallback
     
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
