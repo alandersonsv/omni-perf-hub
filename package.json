@@ -5,8 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/validate-env.cjs && vite build",
     "build:dev": "vite build --mode development",
+    "build:prod": "NODE_ENV=production node scripts/validate-env.cjs && vite build",
+    "build:unsafe": "vite build",
+    "validate-env": "node scripts/validate-env.cjs",
+    "generate-env-template": "node scripts/validate-env.cjs --generate-template",
     "lint": "eslint .",
     "preview": "vite preview"
   },

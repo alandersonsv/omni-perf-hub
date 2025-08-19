@@ -402,6 +402,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      // Debug específico para produção
+      if (import.meta.env.PROD) {
+        console.log('🔐 PROD LOGIN ATTEMPT:', {
+          email,
+          timestamp: new Date().toISOString(),
+          supabaseUrl: supabase.supabaseUrl,
+          keyPrefix: supabase.supabaseKey.substring(0, 20) + '...',
+          userAgent: navigator.userAgent.substring(0, 50),
+          environment: import.meta.env.MODE,
+          hostname: window.location.hostname
+        });
+      }
+      
       console.log('🔐 Attempting login for:', email);
       console.log('📡 Supabase URL:', supabase.supabaseUrl);
       console.log('🔑 Supabase Key prefix:', supabase.supabaseKey.substring(0, 20) + '...');
@@ -413,12 +426,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log(`⏱️ Login request took: ${(endTime - startTime).toFixed(2)}ms`);
       
       if (error) {
-        console.error('❌ Login error details:', {
+        // Log detalhado para produção
+        const errorDetails = {
           message: error.message,
           status: error.status,
           code: error.name,
+          timestamp: new Date().toISOString(),
+          environment: import.meta.env.MODE,
+          supabaseUrl: supabase.supabaseUrl,
+          requestDuration: `${(endTime - startTime).toFixed(2)}ms`,
           details: error
-        });
+        };
+        
+        console.error('❌ Login error details:', errorDetails);
+        
+        // Log específico para produção com mais contexto
+        if (import.meta.env.PROD) {
+          console.error('❌ PROD LOGIN ERROR:', {
+            ...errorDetails,
+            networkStatus: navigator.onLine ? 'online' : 'offline',
+            cookiesEnabled: navigator.cookieEnabled,
+            localStorageAvailable: (() => {
+              try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                return true;
+              } catch (e) {
+                return false;
+              }
+            })()
+          });
+        }
+        
         return false;
       }
       
@@ -434,9 +473,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           expires_at: data.session.expires_at
         } : null
       });
+      
+      // Log de sucesso para produção
+      if (import.meta.env.PROD) {
+        console.log('✅ PROD LOGIN SUCCESS:', {
+          userId: data.user?.id,
+          email: data.user?.email,
+          hasSession: !!data.session,
+          sessionExpires: data.session?.expires_at ? new Date(data.session.expires_at * 1000) : null,
+          requestDuration: `${(endTime - startTime).toFixed(2)}ms`,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       return true;
     } catch (error) {
       console.error('💥 Login exception:', error);
+      
+      // Log de exceção para produção
+      if (import.meta.env.PROD) {
+        console.error('💥 PROD LOGIN EXCEPTION:', {
+          error: error.message,
+          stack: error.stack,
+          timestamp: new Date().toISOString(),
+          environment: import.meta.env.MODE,
+          supabaseUrl: supabase.supabaseUrl
+        });
+      }
+      
       return false;
     }
   };
