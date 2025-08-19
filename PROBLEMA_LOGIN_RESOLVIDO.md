@@ -34,9 +34,9 @@ VITE_GOOGLE_CLIENT_ID=your_actual_google_client_id_here
 
 **Depois:**
 ```env
-VITE_SUPABASE_URL=https://wmrygkfxnzuxkgnybkec.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtcnlna2Z4bnp1eGtnbnlia2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1NTAzMTMsImV4cCI6MjA2OTEyNjMxM30.WU0ckHacd8no5GUIjdySke1jwo1ol-6k_sVr37Nxzzc
-VITE_GOOGLE_CLIENT_ID=667163438834-9b8lqnk8tjskde65m79c22og9ofiovkb.apps.googleusercontent.com
+VITE_SUPABASE_URL=https://[SEU_PROJETO].supabase.co
+VITE_SUPABASE_ANON_KEY=[SUA_CHAVE_ANON_REAL]
+VITE_GOOGLE_CLIENT_ID=[SEU_GOOGLE_CLIENT_ID_REAL]
 ```
 
 ### 2. ✅ Sistema de Validação Implementado
@@ -108,7 +108,7 @@ $ npm run build
 ```
 
 3. **Configuração Supabase:**
-- ✅ URL real: `https://wmrygkfxnzuxkgnybkec.supabase.co`
+- ✅ URL real: `https://[SEU_PROJETO].supabase.co`
 - ✅ Chave anônima válida (JWT format)
 - ✅ Projeto ativo e acessível
 
@@ -122,14 +122,19 @@ $ npm run build
 1. **Dashboard > Site Settings > Environment Variables**
 2. **Adicionar:**
 ```bash
-VITE_SUPABASE_URL=https://wmrygkfxnzuxkgnybkec.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtcnlna2Z4bnp1eGtnbnlia2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1NTAzMTMsImV4cCI6MjA2OTEyNjMxM30.WU0ckHacd8no5GUIjdySke1jwo1ol-6k_sVr37Nxzzc
-VITE_GOOGLE_CLIENT_ID=667163438834-9b8lqnk8tjskde65m79c22og9ofiovkb.apps.googleusercontent.com
+VITE_SUPABASE_URL=https://[SEU_PROJETO].supabase.co
+VITE_SUPABASE_ANON_KEY=[SUA_CHAVE_ANON_REAL]
+VITE_GOOGLE_CLIENT_ID=[SEU_GOOGLE_CLIENT_ID_REAL]
 ```
 
 #### Para Vercel:
 1. **Project Settings > Environment Variables**
-2. **Adicionar as mesmas variáveis acima**
+2. **Adicionar:**
+```bash
+VITE_SUPABASE_URL=https://[SEU_PROJETO].supabase.co
+VITE_SUPABASE_ANON_KEY=[SUA_CHAVE_ANON_REAL]
+VITE_GOOGLE_CLIENT_ID=[SEU_GOOGLE_CLIENT_ID_REAL]
+```
 
 ### 2. Fazer Deploy
 
@@ -151,7 +156,7 @@ console.log('Environment:', import.meta.env.MODE);
 console.log('Supabase URL:', window.supabase?.supabaseUrl);
 
 // Testar login
-window.supabaseDebug?.testLogin('seu@email.com', 'sua_senha');
+window.supabaseDebug?.testLogin('[SEU_EMAIL]', '[SUA_SENHA]');
 ```
 
 ---
@@ -176,7 +181,7 @@ window.supabaseDebug?.testLogin('seu@email.com', 'sua_senha');
 
 **Login Bem-sucedido:**
 ```
-🔐 PROD LOGIN ATTEMPT: { email: '...', timestamp: '...', supabaseUrl: 'https://wmrygkfxnzuxkgnybkec.supabase.co' }
+🔐 PROD LOGIN ATTEMPT: { email: '...', timestamp: '...', supabaseUrl: 'https://[SEU_PROJETO].supabase.co' }
 ✅ PROD LOGIN SUCCESS: { userId: '...', email: '...', hasSession: true }
 ```
 

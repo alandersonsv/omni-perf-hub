@@ -22,3 +22,54 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Supabase
+.branches
+.temp
+.env.local
+.env.production
+
+# OS generated files
+Thumbs.db
+.DS_Store
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build files
+build/
+dist/
+
+# Environment variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Arquivos de documentação com credenciais (manter apenas versões sanitizadas)
+*_CREDENTIALS.md
+*_SECRETS.md
+CREDENCIAIS_*.md
+
+# Arquivos de backup que podem conter dados sensíveis
+*.backup
+*.bak
+*.sql.backup
+
+# Arquivos temporários de debug
+debug-*.log
+temp-*.md
+
+# Chaves e certificados
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Arquivos de configuração local
+config.local.*
+settings.local.*
