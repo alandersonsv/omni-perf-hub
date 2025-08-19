@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useRef, ReactNod
 import { supabase } from '@/integrations/supabase/client';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { Database } from '@/integrations/supabase/types';
+import { handleMissingAgencyAssociation } from '@/utils/ensureUserAgency';
 
 // Expor supabase globalmente para debug
 if (typeof window !== 'undefined') {
@@ -253,6 +254,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Buscar dados em team_members (sem .single() para evitar erro 406)
       const { data: teamMembers, error } = await supabase
+      // Buscar dados em team_members (sem .single() para evitar erro 406)
+      const { data: teamMembers, error } = await supabase
         .from('team_members')
         .select(`
           agency_id,
@@ -266,6 +269,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         `)
         .eq('id', user.id)
         .order('created_at', { ascending: false })
+        .limit(1);
+        .order('invited_at', { ascending: false })
         .limit(1);
 
       if (error || !teamMembers || teamMembers.length === 0) {
@@ -288,8 +293,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isLoading: false
         });
         return;
+      if (error || !teamMembers || teamMembers.length === 0) {
+        console.warn('User not found in team_members table:', error?.message || 'No records found');
+        console.log('🔧 AUTO-FIXING: Creating agency association for user:', user.email);
+        
+        try {
+          // Automatically create agency association
+          const agencyData = await handleMissingAgencyAssociation(user.email!);
+          
+          console.log('✅ Agency association created:', agencyData);
+          
+          // Set state with new agency data
+          setState({
+            user: {
+              ...user,
+              user_metadata: {
+                ...user.user_metadata,
+                agency_id: agencyData.agency_id,
+                role: agencyData.user_role,
+                agency_name: agencyData.agency_name
+              }
+            } as User,
+            userProfile: {
+              id: user.id,
+              email: user.email!,
+              full_name: user.user_metadata?.full_name || user.email!,
+              avatar_url: user.user_metadata?.avatar_url,
+              onboarding_completed: true,
+              created_at: null,
+              updated_at: null
+            },
+            agency: {
+              id: agencyData.agency_id,
+              name: agencyData.agency_name,
+              subscription_plan: 'trial',
+              trial_ends_at: null
+            },
+            status: 'ready',
+            isLoading: false
+          });
+          return;
+          
+        } catch (autoFixError) {
+          console.error('Failed to auto-create agency association:', autoFixError);
+          
+          // Fallback to no_agency status
+          setState({
+            user: user as User,
+            userProfile: {
+              id: user.id,
+              email: user.email!,
+              full_name: user.user_metadata?.full_name || user.email!,
+              avatar_url: user.user_metadata?.avatar_url,
+              onboarding_completed: false,
+              created_at: null,
+              updated_at: null
+            },
+            agency: null,
+            status: 'no_agency',
+            isLoading: false
+          });
+          return;
+        }
       }
 
+      const teamMember = teamMembers[0]; // Pegar o primeiro (mais recente) registro
       const teamMember = teamMembers[0]; // Pegar o primeiro (mais recente) registro
       console.log('Team member data loaded:', teamMember);
 
