@@ -373,7 +373,7 @@ VITE_OAUTH_STATE_SECRET=dev_secret_key_here
 #### **Arquivo: `.env.production` (criar novo)**
 ```env
 # Configurações para produção
-VITE_SUPABASE_URL=https://wmrygkfxnzuxkgnybkec.supabase.co
+VITE_SUPABASE_URL=https://[SEU_PROJETO].supabase.co
 VITE_SUPABASE_ANON_KEY=sua_chave_real_de_producao_aqui
 
 # OAuth (produção)

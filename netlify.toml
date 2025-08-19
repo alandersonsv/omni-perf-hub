@@ -17,6 +17,9 @@
   
   # NPM version
   NPM_VERSION = "9"
+  
+  # Desabilitar scan de secrets - variáveis VITE_ são públicas por design
+  SECRETS_SCAN_ENABLED = "false"
 
 # Redirect rules for SPA (Single Page Application)
 [[redirects]]

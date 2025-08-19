@@ -78,32 +78,123 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading: true
   });
   
-  // Ref para acessar o estado atual dentro de closures
-  const stateRef = useRef(state);
-  stateRef.current = state;
-  
-  // Ref para controlar execuções simultâneas de loadCompleteUserData
+  // Sistema avançado de controle de execução
   const loadingRef = useRef(false);
+  const stateRef = useRef(state);
+  const executionCountRef = useRef(0);
+  const lastExecutionTimeRef = useRef(0);
+  const watchdogRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Atualizar ref sempre que state mudar
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
-  // Função para carregar dados usando as tabelas existentes (team_members + agencies)
-  const loadCompleteUserData = async (user: SupabaseUser) => {
-    console.log('🚀 LoadCompleteUserData called for:', user.email);
-    console.log('🔒 LoadingRef current state:', loadingRef.current);
-    
-    // Evitar execuções simultâneas
-    if (loadingRef.current) {
-      console.log('⏸️ LoadCompleteUserData already running, skipping');
-      return;
+  // Sistema de Watchdog para detectar estados travados
+  const startWatchdog = () => {
+    if (watchdogRef.current) {
+      clearTimeout(watchdogRef.current);
     }
     
-    console.log('✅ Starting loadCompleteUserData execution');
+    watchdogRef.current = setTimeout(() => {
+      const currentState = stateRef.current;
+      const timeSinceLastExecution = Date.now() - lastExecutionTimeRef.current;
+      
+      console.log('🐕 WATCHDOG: Verificando estado travado:', {
+        isLoading: currentState.isLoading,
+        status: currentState.status,
+        hasUser: !!currentState.user,
+        loadingRefActive: loadingRef.current,
+        timeSinceLastExecution,
+        executionCount: executionCountRef.current
+      });
+      
+      // Detectar estado travado: loading há mais de 15 segundos
+      if (currentState.isLoading && currentState.status === 'loading' && timeSinceLastExecution > 15000) {
+        console.log('🚨 WATCHDOG: Estado travado detectado! Forçando recuperação...');
+        forceRecovery();
+      }
+    }, 20000); // Verificar a cada 20 segundos
+  };
+
+  // Sistema de recuperação forçada
+  const forceRecovery = async () => {
+    console.log('🔧 FORCE RECOVERY: Iniciando recuperação de emergência');
+    
+    try {
+      // Reset completo do estado de loading
+      loadingRef.current = false;
+      
+      // Verificar sessão atual
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('❌ FORCE RECOVERY: Erro ao verificar sessão:', error);
+        setState(prev => ({ ...prev, isLoading: false, status: 'error' }));
+        return;
+      }
+      
+      if (session?.user) {
+        console.log('🔄 FORCE RECOVERY: Sessão encontrada, forçando loadCompleteUserData');
+        await loadCompleteUserData(session.user, true); // Força execução
+      } else {
+        console.log('❌ FORCE RECOVERY: Nenhuma sessão encontrada');
+        setState({
+          user: null,
+          userProfile: null,
+          agency: null,
+          status: 'loading',
+          isLoading: false
+        });
+      }
+    } catch (error) {
+      console.error('💥 FORCE RECOVERY: Erro durante recuperação:', error);
+      setState(prev => ({ ...prev, isLoading: false, status: 'error' }));
+    }
+  };
+
+  // Função para carregar dados usando as tabelas existentes (team_members + agencies)
+  const loadCompleteUserData = async (user: SupabaseUser, forceExecution = false) => {
+    const executionId = ++executionCountRef.current;
+    const startTime = Date.now();
+    lastExecutionTimeRef.current = startTime;
+    
+    console.log(`🚀 LoadCompleteUserData #${executionId} iniciado:`, {
+      email: user.email,
+      forceExecution,
+      loadingRefActive: loadingRef.current,
+      currentStatus: stateRef.current.status
+    });
+    
+    if (loadingRef.current && !forceExecution) {
+      console.log(`⚠️ LoadCompleteUserData #${executionId} já em execução, aguardando...`);
+      
+      // Aguardar até 5 segundos pela execução atual
+      let waitTime = 0;
+      while (loadingRef.current && waitTime < 5000) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        waitTime += 100;
+      }
+      
+      if (loadingRef.current) {
+        console.log(`🔥 LoadCompleteUserData #${executionId} timeout de espera, forçando execução`);
+        loadingRef.current = false; // Reset forçado
+      } else {
+        console.log(`✅ LoadCompleteUserData #${executionId} execução anterior concluída`);
+        return;
+      }
+    }
+    
     loadingRef.current = true;
     
-    // Timeout de segurança para resetar loadingRef
+    // Timeout de segurança mais agressivo
     const timeoutId = setTimeout(() => {
-      console.log('⚠️ LoadCompleteUserData timeout, resetting loadingRef');
+      console.log(`⚠️ LoadCompleteUserData #${executionId} timeout (8s), resetando loadingRef`);
       loadingRef.current = false;
-    }, 10000);
+    }, 8000);
+    
+    // Iniciar watchdog
+    startWatchdog();
     
     try {
       console.log('🔄 Loading complete user data for:', user.email);
@@ -160,8 +251,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Buscar dados em team_members
-      const { data: teamMember, error } = await supabase
+      // Buscar dados em team_members (sem .single() para evitar erro 406)
+      const { data: teamMembers, error } = await supabase
         .from('team_members')
         .select(`
           agency_id,
@@ -174,10 +265,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           )
         `)
         .eq('id', user.id)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-      if (error) {
-        console.warn('User not found in team_members table:', error.message);
+      if (error || !teamMembers || teamMembers.length === 0) {
+        console.warn('User not found in team_members table:', error?.message || 'No records found');
         
         // Usuário não tem agência
         setState({
@@ -198,6 +290,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      const teamMember = teamMembers[0]; // Pegar o primeiro (mais recente) registro
       console.log('Team member data loaded:', teamMember);
 
       // Construir dados do usuário
@@ -236,7 +329,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
     } catch (error) {
-      console.error('Error in loadCompleteUserData:', error);
+      console.error(`❌ LoadCompleteUserData #${executionId} erro:`, error);
       setState(prev => ({ 
         ...prev, 
         isLoading: false, 
@@ -244,15 +337,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: user as User
       }));
     } finally {
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      
       clearTimeout(timeoutId);
+      if (watchdogRef.current) {
+        clearTimeout(watchdogRef.current);
+        watchdogRef.current = null;
+      }
       loadingRef.current = false;
-      console.log('🏁 LoadCompleteUserData finished, loadingRef reset');
+      
+      console.log(`🏁 LoadCompleteUserData #${executionId} finalizado:`, {
+        duration: `${duration}ms`,
+        finalStatus: stateRef.current.status,
+        hasUser: !!stateRef.current.user,
+        isLoading: stateRef.current.isLoading
+      });
     }
   };
 
   // Auth state listener
   useEffect(() => {
     console.log('🔧 Setting up auth state listener (useEffect executed)');
+    console.log('🏭 Environment info:', {
+      NODE_ENV: process.env.NODE_ENV,
+      PROD: import.meta.env.PROD,
+      SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+      SUPABASE_KEY_PREFIX: import.meta.env.VITE_SUPABASE_ANON_KEY?.substring(0, 20)
+    });
     console.log('📊 Current state when setting up listener:', {
       hasUser: !!state.user,
       status: state.status,
@@ -281,12 +393,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (event === 'SIGNED_IN') {
-          console.log('🎉 User signed in, calling loadCompleteUserData');
+          console.log('🎉 MAIN LISTENER: User signed in, calling loadCompleteUserData');
+          console.log('📊 MAIN LISTENER: Session details:', {
+            userId: session.user?.id,
+            email: session.user?.email,
+            hasMetadata: !!session.user?.user_metadata,
+            agencyId: session.user?.user_metadata?.agency_id,
+            currentState: stateRef.current.status,
+            loadingRefActive: loadingRef.current
+          });
+          
           try {
-            await loadCompleteUserData(session.user);
-            console.log('✅ LoadCompleteUserData call completed');
+            // Verificar se precisa forçar execução
+            const shouldForce = stateRef.current.status === 'loading' && loadingRef.current;
+            if (shouldForce) {
+              console.log('🔥 MAIN LISTENER: Estado travado detectado, forçando execução');
+            }
+            
+            await loadCompleteUserData(session.user, shouldForce);
+            console.log('✅ MAIN LISTENER: LoadCompleteUserData call completed');
           } catch (error) {
-            console.error('❌ Error in loadCompleteUserData:', error);
+            console.error('❌ MAIN LISTENER: Error in loadCompleteUserData:', error);
+            // Em caso de erro, tentar recuperação após 2 segundos
+            setTimeout(() => {
+              console.log('🔄 MAIN LISTENER: Tentando recuperação após erro');
+              forceRecovery();
+            }, 2000);
           }
         } else if (event === 'TOKEN_REFRESHED') {
           console.log('Token refreshed, checking if reload needed');
@@ -333,8 +465,106 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Sistema de fallback inteligente
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout;
+    let timeoutId: NodeJS.Timeout;
+    let pollCount = 0;
+    const maxPolls = 10; // Máximo 10 tentativas
+    
+    // Ativar fallback se estado estiver loading por muito tempo
+    timeoutId = setTimeout(() => {
+      const currentState = stateRef.current;
+      
+      if (currentState.isLoading && !currentState.user) {
+        console.log('⚠️ SMART FALLBACK: Estado loading detectado, iniciando polling inteligente');
+        
+        const smartPoll = async () => {
+          pollCount++;
+          console.log(`🔄 SMART FALLBACK: Poll #${pollCount}/${maxPolls}`);
+          
+          try {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            
+            if (error) {
+              console.error('❌ SMART FALLBACK: Erro ao verificar sessão:', error);
+              return;
+            }
+            
+            if (session?.user) {
+              console.log('🎯 SMART FALLBACK: Sessão detectada, usando força de recuperação');
+              
+              // Parar polling imediatamente
+              if (pollInterval) {
+                clearInterval(pollInterval);
+                console.log('⏹️ SMART FALLBACK: Polling interrompido');
+              }
+              
+              // Usar sistema de recuperação forçada
+              await forceRecovery();
+              
+            } else if (pollCount >= maxPolls) {
+              console.log('❌ SMART FALLBACK: Máximo de tentativas atingido, parando polling');
+              if (pollInterval) {
+                clearInterval(pollInterval);
+              }
+              
+              // Definir estado como erro após esgotar tentativas
+              setState(prev => ({
+                ...prev,
+                isLoading: false,
+                status: 'error'
+              }));
+            }
+          } catch (error) {
+            console.error('💥 SMART FALLBACK: Exceção durante polling:', error);
+            
+            if (pollCount >= maxPolls) {
+              if (pollInterval) {
+                clearInterval(pollInterval);
+              }
+            }
+          }
+        };
+        
+        // Iniciar polling a cada 2 segundos (mais agressivo)
+        pollInterval = setInterval(smartPoll, 2000);
+        console.log('🔄 SMART FALLBACK: Polling iniciado (2s interval)');
+        
+        // Executar primeira verificação imediatamente
+        smartPoll();
+        
+        // Parar polling após 25 segundos como segurança
+        setTimeout(() => {
+          if (pollInterval) {
+            clearInterval(pollInterval);
+            console.log('⏰ SMART FALLBACK: Polling interrompido por timeout de segurança (25s)');
+          }
+        }, 25000);
+      }
+    }, 3000); // Aguardar apenas 3 segundos antes de ativar fallback
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [state.isLoading, state.user]);
+
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      // Debug específico para produção
+      if (import.meta.env.PROD) {
+        console.log('🔐 PROD LOGIN ATTEMPT:', {
+          email,
+          timestamp: new Date().toISOString(),
+          supabaseUrl: supabase.supabaseUrl,
+          keyPrefix: supabase.supabaseKey.substring(0, 20) + '...',
+          userAgent: navigator.userAgent.substring(0, 50),
+          environment: import.meta.env.MODE,
+          hostname: window.location.hostname
+        });
+      }
+      
       console.log('🔐 Attempting login for:', email);
       console.log('📡 Supabase URL:', supabase.supabaseUrl);
       console.log('🔑 Supabase Key prefix:', supabase.supabaseKey.substring(0, 20) + '...');
@@ -346,12 +576,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log(`⏱️ Login request took: ${(endTime - startTime).toFixed(2)}ms`);
       
       if (error) {
-        console.error('❌ Login error details:', {
+        // Log detalhado para produção
+        const errorDetails = {
           message: error.message,
           status: error.status,
           code: error.name,
+          timestamp: new Date().toISOString(),
+          environment: import.meta.env.MODE,
+          supabaseUrl: supabase.supabaseUrl,
+          requestDuration: `${(endTime - startTime).toFixed(2)}ms`,
           details: error
-        });
+        };
+        
+        console.error('❌ Login error details:', errorDetails);
+        
+        // Log específico para produção com mais contexto
+        if (import.meta.env.PROD) {
+          console.error('❌ PROD LOGIN ERROR:', {
+            ...errorDetails,
+            networkStatus: navigator.onLine ? 'online' : 'offline',
+            cookiesEnabled: navigator.cookieEnabled,
+            localStorageAvailable: (() => {
+              try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                return true;
+              } catch (e) {
+                return false;
+              }
+            })()
+          });
+        }
+        
         return false;
       }
       
@@ -367,9 +623,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           expires_at: data.session.expires_at
         } : null
       });
+      
+      // Log de sucesso para produção
+      if (import.meta.env.PROD) {
+        console.log('✅ PROD LOGIN SUCCESS:', {
+          userId: data.user?.id,
+          email: data.user?.email,
+          hasSession: !!data.session,
+          sessionExpires: data.session?.expires_at ? new Date(data.session.expires_at * 1000) : null,
+          requestDuration: `${(endTime - startTime).toFixed(2)}ms`,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       return true;
     } catch (error) {
       console.error('💥 Login exception:', error);
+      
+      // Log de exceção para produção
+      if (import.meta.env.PROD) {
+        console.error('💥 PROD LOGIN EXCEPTION:', {
+          error: error.message,
+          stack: error.stack,
+          timestamp: new Date().toISOString(),
+          environment: import.meta.env.MODE,
+          supabaseUrl: supabase.supabaseUrl
+        });
+      }
+      
       return false;
     }
   };
