@@ -251,8 +251,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Buscar dados em team_members
-      const { data: teamMember, error } = await supabase
+      // Buscar dados em team_members (sem .single() para evitar erro 406)
+      const { data: teamMembers, error } = await supabase
         .from('team_members')
         .select(`
           agency_id,
@@ -265,10 +265,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           )
         `)
         .eq('id', user.id)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-      if (error) {
-        console.warn('User not found in team_members table:', error.message);
+      if (error || !teamMembers || teamMembers.length === 0) {
+        console.warn('User not found in team_members table:', error?.message || 'No records found');
         
         // Usuário não tem agência
         setState({
@@ -289,6 +290,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      const teamMember = teamMembers[0]; // Pegar o primeiro (mais recente) registro
       console.log('Team member data loaded:', teamMember);
 
       // Construir dados do usuário
