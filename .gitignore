@@ -85,3 +85,6 @@ settings.local.*
 credentials.json
 secrets.json
 api-keys.json
+credentials.md
+secrets.md
+api-keys.md

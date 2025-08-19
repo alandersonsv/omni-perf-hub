@@ -10,15 +10,24 @@ As credenciais reais foram removidas do repositório por segurança. Para que a 
 
 ### **Variáveis Públicas (VITE_)**
 ```
-VITE_SUPABASE_URL=https://wmrygkfxnzuxkgnybkec.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indtcnlna2Z4bnp1eGtnbnlia2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1NTAzMTMsImV4cCI6MjA2OTEyNjMxM30.WU0ckHacd8no5GUIjdySke1jwo1ol-6k_sVr37Nxzzc
-VITE_GOOGLE_CLIENT_ID=667163438834-9b8lqnk8tjskde65m79c22og9ofiovkb.apps.googleusercontent.com
-VITE_META_APP_ID=your_actual_meta_app_id_here
-VITE_OAUTH_STATE_SECRET=your_secure_random_string_here
+VITE_SUPABASE_URL=https://[SEU_PROJETO].supabase.co
+VITE_SUPABASE_ANON_KEY=[SUA_CHAVE_ANON_SUPABASE]
+VITE_GOOGLE_CLIENT_ID=[SEU_GOOGLE_CLIENT_ID]
+VITE_META_APP_ID=[SEU_META_APP_ID]
+VITE_OAUTH_STATE_SECRET=[SUA_STRING_ALEATORIA_PUBLICA]
 ```
 
 ### **Variáveis Secretas (SEM VITE_)**
-``
+```
+GOOGLE_CLIENT_SECRET=[SEU_GOOGLE_CLIENT_SECRET]
+GOOGLE_ADS_DEVELOPER_TOKEN=[SEU_GOOGLE_ADS_TOKEN]
+META_APP_SECRET=[SEU_META_APP_SECRET]
+SUPABASE_SERVICE_ROLE_KEY=[SUA_CHAVE_SERVICE_ROLE]
+GOOGLE_ADS_WEBHOOK_SECRET=[SEU_WEBHOOK_SECRET_GOOGLE]
+META_WEBHOOK_SECRET=[SEU_WEBHOOK_SECRET_META]
+WOOCOMMERCE_WEBHOOK_SECRET=[SEU_WEBHOOK_SECRET_WOO]
+OAUTH_STATE_SECRET=[SUA_STRING_ALEATORIA_SECRETA]
+N8N_WEBHOOK_URL=[SUA_URL_N8N]
 ```
 
 ---
@@ -36,7 +45,7 @@ Adicione cada variável individualmente:
 
 **Exemplo:**
 - **Key:** `VITE_SUPABASE_URL`
-- **Value:** `https://wmrygkfxnzuxkgnybkec.supabase.co`
+- **Value:** `https://[SEU_PROJETO].supabase.co`
 - **Scopes:** Deixe marcado "All deploy contexts"
 
 ### **Passo 3: Deploy**
