@@ -48,6 +48,13 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*.local
+
+# Arquivos com credenciais reais
+.env.real
+.env.prod
+.env.secrets
+.env.backup
 
 # Arquivos de documentação com credenciais (manter apenas versões sanitizadas)
 *_CREDENTIALS.md
@@ -73,3 +80,8 @@ temp-*.md
 # Arquivos de configuração local
 config.local.*
 settings.local.*
+
+# Arquivos de credenciais específicos
+credentials.json
+secrets.json
+api-keys.json
