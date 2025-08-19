@@ -44,13 +44,13 @@ Secret env var "VITE_SUPABASE_ANON_KEY"'s value detected
 
 **Alterações:**
 ```diff
-- VITE_SUPABASE_URL=https://wmrygkfxnzuxkgnybkec.supabase.co
+- VITE_SUPABASE_URL=https://your-project.supabase.co
 + VITE_SUPABASE_URL=https://[SEU_PROJETO].supabase.co
 
-- VITE_GOOGLE_CLIENT_ID=667163438834-9b8lqnk8tjskde65m79c22og9ofiovkb.apps.googleusercontent.com
+- VITE_GOOGLE_CLIENT_ID=your_google_client_id_here.apps.googleusercontent.com
 + VITE_GOOGLE_CLIENT_ID=[SEU_GOOGLE_CLIENT_ID_REAL]
 
-- VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+- VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 + VITE_SUPABASE_ANON_KEY=[SUA_CHAVE_ANON_REAL]
 ```
 
@@ -155,9 +155,9 @@ git push
 
 **Variáveis de Ambiente (Dashboard):**
 ```bash
-VITE_SUPABASE_URL=https://wmrygkfxnzuxkgnybkec.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-VITE_GOOGLE_CLIENT_ID=667163438834-9b8lqnk8tjskde65m79c22og9ofiovkb.apps.googleusercontent.com
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+VITE_GOOGLE_CLIENT_ID=your_google_client_id_here.apps.googleusercontent.com
 ```
 
 **Nota:** Estas variáveis são seguras para configurar no Netlify pois são públicas por design.

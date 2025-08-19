@@ -258,9 +258,9 @@ pollInterval = setInterval(smartPoll, 2000);
 
 1. **Variáveis de Ambiente Já Configuradas:**
    ```bash
-   VITE_SUPABASE_URL=https://wmrygkfxnzuxkgnybkec.supabase.co
-   VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-   VITE_GOOGLE_CLIENT_ID=667163438834-9b8lqnk8tjskde65m79c22og9ofiovkb.apps.googleusercontent.com
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+VITE_GOOGLE_CLIENT_ID=your_google_client_id_here.apps.googleusercontent.com
    ```
 
 2. **Build e Deploy:**

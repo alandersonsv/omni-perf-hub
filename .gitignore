@@ -7,6 +7,32 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Arquivos de credenciais
+.env.local
+.env.*.local
+.env.real
+.env.prod
+.env.secrets
+.env.backup
+credentials.json
+secrets.json
+api-keys.json
+credentials.md
+secrets.md
+api-keys.md
+
+# Backups
+*.backup
+*.bak
+
+# Arquivos temporários de comandos Git
+"e --abort"
+"et --soft HEAD~5"
+"h --force-with-lease origin main"
+"h -u origin main-clean"
+tatus
+"ystem with clean environment"
+
 node_modules
 dist
 dist-ssr
