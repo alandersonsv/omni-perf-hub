@@ -254,8 +254,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Buscar dados em team_members (sem .single() para evitar erro 406)
       const { data: teamMembers, error } = await supabase
-      // Buscar dados em team_members (sem .single() para evitar erro 406)
-      const { data: teamMembers, error } = await supabase
         .from('team_members')
         .select(`
           agency_id,
@@ -268,8 +266,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           )
         `)
         .eq('id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
         .order('invited_at', { ascending: false })
         .limit(1);
 
@@ -292,9 +288,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           status: 'no_agency',
           isLoading: false
         });
-        return;
-      if (error || !teamMembers || teamMembers.length === 0) {
-        console.warn('User not found in team_members table:', error?.message || 'No records found');
+        
         console.log('🔧 AUTO-FIXING: Creating agency association for user:', user.email);
         
         try {
@@ -357,7 +351,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      const teamMember = teamMembers[0]; // Pegar o primeiro (mais recente) registro
       const teamMember = teamMembers[0]; // Pegar o primeiro (mais recente) registro
       console.log('Team member data loaded:', teamMember);
 

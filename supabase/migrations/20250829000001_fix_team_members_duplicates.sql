@@ -26,7 +26,7 @@ BEGIN
         WHERE ctid NOT IN (
             SELECT DISTINCT ON (id) ctid
             FROM public.team_members
-            ORDER BY id, created_at DESC NULLS LAST, ctid
+            ORDER BY id, invited_at DESC NULLS LAST, ctid
         );
         
         RAISE NOTICE 'Duplicate cleanup completed';
@@ -163,8 +163,8 @@ SELECT
     email,
     agency_id,
     role,
-    created_at,
+    invited_at,
     'team_member_record' as record_type
 FROM public.team_members
 WHERE id = 'ce1296e8-8701-48a9-8b6d-c3530a0c7465'
-ORDER BY created_at DESC;
+ORDER BY invited_at DESC;
